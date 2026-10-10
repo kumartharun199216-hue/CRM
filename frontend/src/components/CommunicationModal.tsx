@@ -1,0 +1,438 @@
+import React, { useState, useEffect } from 'react';
+import { Lead, CommunicationTemplate, CommunicationLog } from '../types';
+import { api } from '../services/api';
+import {
+  X,
+  Mail,
+  MessageSquare,
+  Phone,
+  Send,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  FileSpreadsheet
+} from 'lucide-react';
+
+interface CommunicationModalProps {
+  lead: Lead | null;
+  initialChannel?: 'EMAIL' | 'WHATSAPP' | 'CALL';
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const CommunicationModal: React.FC<CommunicationModalProps> = ({
+  lead,
+  initialChannel = 'EMAIL',
+  isOpen,
+  onClose,
+}) => {
+  const [channel, setChannel] = useState<'EMAIL' | 'WHATSAPP' | 'CALL'>(initialChannel);
+  const [templates, setTemplates] = useState<CommunicationTemplate[]>([]);
+  const [logs, setLogs] = useState<CommunicationLog[]>([]);
+
+  // Email form
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+
+  // WhatsApp form
+  const [whatsappMessage, setWhatsappMessage] = useState('');
+
+  // Submission state
+  const [submitting, setSubmitting] = useState(false);
+  const [resultMsg, setResultMsg] = useState<{ type: 'success' | 'error' | 'blocker'; text: string } | null>(null);
+
+  useEffect(() => {
+    setChannel(initialChannel);
+  }, [initialChannel]);
+
+  useEffect(() => {
+    if (lead && isOpen) {
+      setResultMsg(null);
+      api.getTemplates()
+        .then(setTemplates)
+        .catch(() => {});
+
+      api.getCommunicationLogs({ lead: lead.id })
+        .then(setLogs)
+        .catch(() => {});
+    }
+  }, [lead, isOpen]);
+
+  if (!isOpen || !lead) return null;
+
+  const handleApplyTemplate = (template: CommunicationTemplate) => {
+    if (template.channel === 'EMAIL') {
+      setEmailSubject(template.subject || '');
+      setEmailBody(template.body);
+    } else if (template.channel === 'WHATSAPP') {
+      setWhatsappMessage(template.body);
+    }
+  };
+
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setResultMsg(null);
+
+    try {
+      await api.sendEmail({
+        lead_id: lead.id,
+        subject: emailSubject,
+        body: emailBody,
+      });
+      setResultMsg({ type: 'success', text: `Email sent via Google SMTP to ${lead.email}.` });
+      setEmailSubject('');
+      setEmailBody('');
+      api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Email failed to send.';
+      setResultMsg({
+        type: msg.includes('blocker') ? 'blocker' : 'error',
+        text: msg,
+      });
+      api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSendWhatsApp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setResultMsg(null);
+
+    try {
+      await api.sendWhatsApp({
+        lead_id: lead.id,
+        message: whatsappMessage,
+      });
+      setResultMsg({ type: 'success', text: `WhatsApp message delivered to ${lead.phone}.` });
+      setWhatsappMessage('');
+      api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'WhatsApp failed to send.';
+      setResultMsg({
+        type: msg.includes('blocker') ? 'blocker' : 'error',
+        text: msg,
+      });
+      api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleInitiateCall = async () => {
+    setSubmitting(true);
+    setResultMsg(null);
+
+    try {
+      await api.initiateCall({ lead_id: lead.id });
+      setResultMsg({ type: 'success', text: `Call initiated via Callyzer for ${lead.phone}.` });
+      api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Call initiation failed.';
+      setResultMsg({
+        type: msg.includes('blocker') ? 'blocker' : 'error',
+        text: msg,
+      });
+      api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const relevantTemplates = templates.filter((t) =>
+    channel === 'CALL' ? false : t.channel === channel
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+      <div className="bg-white border border-[#E2E8F0] rounded-xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] relative text-[#0F172A]">
+        {/* Top Accent Bar */}
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#2563EB] via-[#7C3AED] to-[#1E3A8A] opacity-90" />
+
+        {/* Header */}
+        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC] pt-4.5">
+          <div>
+            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
+              <span>Lead Communication</span>
+              <span className="text-xs font-mono text-[#2563EB] font-semibold">({lead.contact_name || lead.title})</span>
+            </h3>
+            <p className="text-xs text-[#64748B]">
+              Approved channels: Google SMTP, WhatsApp Business Platform, and Callyzer
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Channel Navigation Tabs */}
+        <div className="flex border-b border-[#E2E8F0] bg-[#F8FAFC] px-4">
+          <button
+            type="button"
+            onClick={() => {
+              setChannel('EMAIL');
+              setResultMsg(null);
+            }}
+            className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition cursor-pointer ${
+              channel === 'EMAIL'
+                ? 'border-[#2563EB] text-[#2563EB]'
+                : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5" />
+            Email (Google SMTP)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setChannel('WHATSAPP');
+              setResultMsg(null);
+            }}
+            className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition cursor-pointer ${
+              channel === 'WHATSAPP'
+                ? 'border-[#16A34A] text-[#16A34A]'
+                : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            WhatsApp (Business API)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setChannel('CALL');
+              setResultMsg(null);
+            }}
+            className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition cursor-pointer ${
+              channel === 'CALL'
+                ? 'border-[#7C3AED] text-[#7C3AED]'
+                : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
+            }`}
+          >
+            <Phone className="w-3.5 h-3.5" />
+            Call (Callyzer)
+          </button>
+        </div>
+
+        {/* Form Body */}
+        <div className="p-5 space-y-4 flex-1 overflow-y-auto scrollbar-thin">
+          {/* Result Alert */}
+          {resultMsg && (
+            <div
+              className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
+                resultMsg.type === 'success'
+                  ? 'bg-[#DCFCE7] border-[#BBF7D0] text-[#16A34A]'
+                  : resultMsg.type === 'blocker'
+                  ? 'bg-[#FEF3C7] border-[#FDE68A] text-[#D97706]'
+                  : 'bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]'
+              }`}
+            >
+              {resultMsg.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              )}
+              <div className="space-y-1">
+                <span className="font-semibold">
+                  {resultMsg.type === 'blocker' ? 'Integration Blocker Identified:' : ''}
+                </span>
+                <p className="m-0">{resultMsg.text}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Template Selection helper */}
+          {relevantTemplates.length > 0 && (
+            <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-[#0F172A]">
+                <FileSpreadsheet className="w-3.5 h-3.5 text-[#2563EB]" />
+                <span>Pre-load from communication template:</span>
+              </div>
+              <select
+                onChange={(e) => {
+                  const tmpl = relevantTemplates.find((t) => t.id === Number(e.target.value));
+                  if (tmpl) handleApplyTemplate(tmpl);
+                }}
+                defaultValue=""
+                className="text-xs bg-white border border-[#CBD5E1] rounded-lg px-2.5 py-1 text-[#0F172A] focus:outline-none focus:border-[#2563EB] cursor-pointer"
+              >
+                <option value="" disabled>Choose template...</option>
+                {relevantTemplates.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Channel 1: Google SMTP Email */}
+          {channel === 'EMAIL' && (
+            <form onSubmit={handleSendEmail} className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-[#64748B]">
+                <span>To: <strong className="text-[#0F172A] font-mono">{lead.email || 'No email registered'}</strong></span>
+                <span className="text-[11px] text-[#64748B]">Google SMTP (smtp.gmail.com:587)</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#0F172A] mb-1">Subject *</label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Subject line..."
+                  required
+                  className="w-full text-xs bg-white border border-[#CBD5E1] rounded-lg px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition font-sans"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#0F172A] mb-1">Message Body *</label>
+                <textarea
+                  rows={4}
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  placeholder="Type email body..."
+                  required
+                  className="w-full text-xs bg-white border border-[#CBD5E1] rounded-lg px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] font-sans transition"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submitting || !lead.email}
+                  className="crm-btn-primary flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {submitting ? 'Sending via SMTP...' : 'Send Email'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Channel 2: WhatsApp Business Platform */}
+          {channel === 'WHATSAPP' && (
+            <form onSubmit={handleSendWhatsApp} className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-[#64748B]">
+                <span>To: <strong className="text-[#0F172A] font-mono">{lead.phone || 'No phone registered'}</strong></span>
+                <span className="text-[11px] text-[#64748B]">WhatsApp Business Cloud API</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#0F172A] mb-1">WhatsApp Message *</label>
+                <textarea
+                  rows={4}
+                  value={whatsappMessage}
+                  onChange={(e) => setWhatsappMessage(e.target.value)}
+                  placeholder="Type WhatsApp message..."
+                  required
+                  className="w-full text-xs bg-white border border-[#CBD5E1] rounded-lg px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#16A34A] font-sans transition"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submitting || !lead.phone}
+                  className="bg-[#16A34A] hover:bg-[#15803D] flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {submitting ? 'Sending via WhatsApp...' : 'Send WhatsApp Message'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Channel 3: Callyzer Calling */}
+          {channel === 'CALL' && (
+            <div className="p-6 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl space-y-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center mx-auto text-[#2563EB] shadow-xs">
+                <Phone className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-[#0F172A]">Callyzer Outbound Calling</h4>
+                <p className="text-xs text-[#64748B] mt-1 max-w-md mx-auto">
+                  Initiate a verified call session to <span className="font-mono text-[#0F172A] font-semibold">{lead.phone || 'N/A'}</span>.
+                  Per project rules, unverified calls are never simulated.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleInitiateCall}
+                disabled={submitting || !lead.phone}
+                className="crm-btn-primary inline-flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                {submitting ? 'Connecting with Callyzer...' : 'Initiate Call'}
+              </button>
+            </div>
+          )}
+
+          {/* Lead Communication Logs */}
+          <div className="pt-3 border-t border-[#E2E8F0] space-y-2">
+            <h4 className="text-xs font-semibold text-[#0F172A] flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-[#64748B]" />
+              Communication Activity Log ({logs.length})
+            </h4>
+
+            {logs.length === 0 ? (
+              <p className="text-xs text-[#64748B] italic">No communication logged for this lead yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+                {logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-semibold text-[#0F172A]">
+                        [{log.channel}] to {log.recipient}
+                      </span>
+                      <span
+                        className={`crm-pill text-[10px] font-mono ${
+                          log.status === 'SUCCESS'
+                            ? 'crm-pill-success'
+                            : log.status === 'BLOCKED'
+                            ? 'crm-pill-warning'
+                            : 'crm-pill-error'
+                        }`}
+                      >
+                        {log.status}
+                      </span>
+                    </div>
+                    {log.error_message && (
+                      <p className="text-[11px] text-[#DC2626] m-0">{log.error_message}</p>
+                    )}
+                    <div className="text-[10px] text-[#64748B] flex justify-between pt-1">
+                      <span>Initiated by: {log.initiated_by_name}</span>
+                      <span>{new Date(log.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-3 border-t border-[#E2E8F0] bg-[#F8FAFC] flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="crm-btn-secondary px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#0F172A] transition cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

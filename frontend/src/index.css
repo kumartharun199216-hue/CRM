@@ -1,0 +1,274 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:root {
+  --primary-blue: #2563EB;
+  --dark-blue: #1E3A8A;
+  --light-blue: #EFF6FF;
+  --white: #FFFFFF;
+  --primary-purple: #7C3AED;
+  --light-purple: #F3E8FF;
+  --main-bg: #F8FAFC;
+  --primary-text: #0F172A;
+  --secondary-text: #64748B;
+  --borders: #E2E8F0;
+  --success: #16A34A;
+  --warning: #D97706;
+  --error: #DC2626;
+}
+
+body {
+  background-color: var(--main-bg);
+  color: var(--primary-text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* CRM Cards */
+.crm-card,
+.linear-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--borders);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+}
+
+.crm-card-interactive,
+.linear-card-interactive {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.crm-card-interactive:hover,
+.linear-card-interactive:hover {
+  border-color: #93C5FD;
+  box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  transform: translateY(-1px);
+}
+
+/* Accent top bars for cards */
+.linear-accent-bar-indigo::before,
+.crm-accent-bar-blue::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #2563EB 0%, #1E3A8A 100%);
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+}
+
+.linear-accent-bar-purple::before,
+.crm-accent-bar-purple::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 100%);
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+}
+
+.linear-accent-bar-emerald::before,
+.crm-accent-bar-success::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #16A34A 0%, #22C55E 100%);
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+}
+
+.linear-accent-bar-amber::before,
+.crm-accent-bar-warning::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #D97706 0%, #F59E0B 100%);
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+}
+
+/* Buttons */
+.crm-btn-primary,
+.linear-btn-primary {
+  background-color: var(--primary-blue);
+  color: #FFFFFF;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.2);
+  transition: all 0.15s ease-in-out;
+}
+.crm-btn-primary:hover:not(:disabled),
+.linear-btn-primary:hover:not(:disabled) {
+  background-color: #1D4ED8;
+  box-shadow: 0 2px 6px 0 rgba(37, 99, 235, 0.35);
+  transform: translateY(-0.5px);
+}
+.crm-btn-primary:active:not(:disabled),
+.linear-btn-primary:active:not(:disabled) {
+  background-color: var(--dark-blue);
+  transform: translateY(0);
+}
+
+.crm-btn-secondary,
+.linear-btn-secondary {
+  background-color: #FFFFFF;
+  color: var(--primary-text);
+  border: 1px solid var(--borders);
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  transition: all 0.15s ease-in-out;
+}
+.crm-btn-secondary:hover:not(:disabled),
+.linear-btn-secondary:hover:not(:disabled) {
+  background-color: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+.crm-btn-purple {
+  background-color: var(--primary-purple);
+  color: #FFFFFF;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px 0 rgba(124, 58, 237, 0.2);
+  transition: all 0.15s ease-in-out;
+}
+.crm-btn-purple:hover:not(:disabled) {
+  background-color: #6D28D9;
+  box-shadow: 0 2px 6px 0 rgba(124, 58, 237, 0.35);
+}
+
+.linear-btn-emerald {
+  background-color: var(--success);
+  color: #FFFFFF;
+  border: 1px solid transparent;
+  transition: all 0.15s ease-in-out;
+}
+.linear-btn-emerald:hover:not(:disabled) {
+  background-color: #15803D;
+}
+
+.linear-btn-amber {
+  background-color: var(--warning);
+  color: #FFFFFF;
+  border: 1px solid transparent;
+  transition: all 0.15s ease-in-out;
+}
+.linear-btn-amber:hover:not(:disabled) {
+  background-color: #B45309;
+}
+
+/* Badges / Pills */
+.linear-pill,
+.crm-pill {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.linear-pill-indigo,
+.crm-pill-blue {
+  background-color: var(--light-blue);
+  border: 1px solid #BFDBFE;
+  color: var(--primary-blue);
+}
+
+.linear-pill-purple,
+.crm-pill-purple {
+  background-color: var(--light-purple);
+  border: 1px solid #E9D5FF;
+  color: var(--primary-purple);
+}
+
+.linear-pill-emerald,
+.crm-pill-success {
+  background-color: #DCFCE7;
+  border: 1px solid #BBF7D0;
+  color: var(--success);
+}
+
+.linear-pill-amber,
+.crm-pill-warning {
+  background-color: #FEF3C7;
+  border: 1px solid #FDE68A;
+  color: var(--warning);
+}
+
+.linear-pill-cyan,
+.crm-pill-cyan {
+  background-color: #E0F2FE;
+  border: 1px solid #BAE6FD;
+  color: #0284C7;
+}
+
+.crm-pill-error {
+  background-color: #FEE2E2;
+  border: 1px solid #FECACA;
+  color: var(--error);
+}
+
+/* Typography Headings */
+.linear-text-heading {
+  color: var(--primary-text);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.linear-text-brand {
+  color: var(--dark-blue);
+  font-weight: 800;
+}
+
+/* Table Styles */
+.crm-table-header,
+.linear-table-header {
+  background-color: #F8FAFC;
+  border-bottom: 1px solid var(--borders);
+  color: var(--secondary-text);
+}
+
+.crm-table-row,
+.linear-table-row {
+  transition: background-color 0.12s ease;
+}
+.crm-table-row:hover,
+.linear-table-row:hover {
+  background-color: #F1F5F9;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
