@@ -43,8 +43,15 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-production-secret-key-change-me}
       - DEBUG=${DEBUG:-False}
+      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.gmail.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
+      - EMAIL_USE_SSL=${EMAIL_USE_SSL:-False}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Skill Move CRM <lasyalasya153@gmail.com>}
+      - EMAIL_TIMEOUT=${EMAIL_TIMEOUT:-30}
       - WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN:-}
       - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
       - CALLYZER_API_KEY=${CALLYZER_API_KEY:-}
@@ -72,8 +79,15 @@ services:
       - POSTGRES_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.gmail.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
+      - EMAIL_USE_SSL=${EMAIL_USE_SSL:-False}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Skill Move CRM <lasyalasya153@gmail.com>}
+      - EMAIL_TIMEOUT=${EMAIL_TIMEOUT:-30}
     depends_on:
       - backend
       - redis
@@ -96,6 +110,15 @@ services:
       - POSTGRES_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.gmail.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
+      - EMAIL_USE_SSL=${EMAIL_USE_SSL:-False}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Skill Move CRM <lasyalasya153@gmail.com>}
+      - EMAIL_TIMEOUT=${EMAIL_TIMEOUT:-30}
     depends_on:
       - backend
       - redis

@@ -66,7 +66,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='lead',
             name='lead_id',
-            field=models.CharField(blank=True, db_index=True, max_length=32, null=True),
+            field=models.CharField(blank=True, max_length=32, null=True),
         ),
         migrations.AddField(
             model_name='lead',

@@ -152,18 +152,18 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       aria-labelledby="create-user-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
     >
-      <div className="bg-white rounded-2xl shadow-2xl border border-[#E2E8F0] max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
+      <div className="bg-white dark:bg-[#172033] rounded-2xl shadow-2xl border border-[#E2E8F0] dark:border-slate-800 max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
         {/* Header */}
-        <div className="px-6 py-4.5 border-b border-[#E2E8F0] flex items-center justify-between bg-linear-to-r from-blue-50/70 via-indigo-50/30 to-white">
+        <div className="px-6 py-4.5 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between bg-linear-to-r from-blue-50/70 via-indigo-50/30 to-white dark:from-blue-950/40 dark:via-slate-900/50 dark:to-[#172033]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="create-user-modal-title" className="text-base font-bold text-[#0F172A]">
+              <h2 id="create-user-modal-title" className="text-base font-bold text-[#0F172A] dark:text-slate-100">
                 Add New Employee
               </h2>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-[#64748B] dark:text-slate-400">
                 {isAdmin
                   ? 'Onboard staff members, allocate teams, and configure access permissions'
                   : `Add a new Career Counsellor to ${managerAuthorizedTeamName}`}
@@ -174,7 +174,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             type="button"
             id="close-create-user-modal-btn"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             title="Close"
           >
             <X className="w-5 h-5" />
@@ -182,27 +182,27 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5 text-xs text-[#0F172A]">
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5 text-xs text-[#0F172A] dark:text-slate-100">
           {/* General Error Banner */}
           {generalError && (
-            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 flex items-start gap-2.5 shadow-2xs">
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl text-rose-800 dark:text-rose-300 flex items-start gap-2.5 shadow-2xs">
+              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
               <div className="text-xs font-medium leading-relaxed">{generalError}</div>
             </div>
           )}
 
           {/* System Managed Banner */}
-          <div className="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-start gap-3">
-            <Info className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5" />
-            <div className="text-[11px] text-[#475569] space-y-1">
-              <span className="font-semibold text-[#0F172A]">System Managed Setup: </span>
-              Employee ID will be uniquely generated (<code className="font-mono text-blue-700 bg-blue-50 px-1 py-0.5 rounded">EMP-XXXX</code>), account activated immediately, and initial password change required upon first sign-in.
+          <div className="p-3.5 bg-[#F8FAFC] dark:bg-slate-900/50 border border-[#E2E8F0] dark:border-slate-800 rounded-xl flex items-start gap-3">
+            <Info className="w-4 h-4 text-[#2563EB] dark:text-blue-400 shrink-0 mt-0.5" />
+            <div className="text-[11px] text-[#475569] dark:text-slate-300 space-y-1">
+              <span className="font-semibold text-[#0F172A] dark:text-slate-100">System Managed Setup: </span>
+              Employee ID will be uniquely generated (<code className="font-mono text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 px-1 py-0.5 rounded">EMP-XXXX</code>), account activated immediately, and initial password change required upon first sign-in.
             </div>
           </div>
 
           {/* SECTION 1: REQUIRED PERSONAL & CONTACT FIELDS */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3 flex items-center gap-1.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 mb-3 flex items-center gap-1.5">
               <span>Required Information</span>
               <span className="text-rose-500">*</span>
             </h3>
@@ -210,7 +210,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {/* Full Name */}
               <div className="sm:col-span-2 space-y-1">
-                <label htmlFor="user-full-name" className="font-semibold text-slate-700 flex items-center justify-between">
+                <label htmlFor="user-full-name" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-between">
                   <span>Full Name <span className="text-rose-500">*</span></span>
                 </label>
                 <input
@@ -223,16 +223,16 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   }}
                   placeholder="e.g. Aarav Patel"
                   className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition ${
-                    formErrors.fullName ? 'border-rose-400 bg-rose-50/20' : 'border-[#CBD5E1] bg-white'
+                    formErrors.fullName ? 'border-rose-400 bg-rose-50/20 dark:bg-rose-950/20' : 'border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500'
                   }`}
                   required
                 />
-                {formErrors.fullName && <p className="text-[11px] text-rose-600 font-medium">{formErrors.fullName}</p>}
+                {formErrors.fullName && <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{formErrors.fullName}</p>}
               </div>
 
               {/* Email Address */}
               <div className="space-y-1">
-                <label htmlFor="user-email" className="font-semibold text-slate-700 flex items-center gap-1">
+                <label htmlFor="user-email" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5 text-slate-400" />
                   <span>Email Address <span className="text-rose-500">*</span></span>
                 </label>
@@ -246,16 +246,16 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   }}
                   placeholder="e.g. aarav.patel@skillmove.in"
                   className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition ${
-                    formErrors.email ? 'border-rose-400 bg-rose-50/20' : 'border-[#CBD5E1] bg-white'
+                    formErrors.email ? 'border-rose-400 bg-rose-50/20 dark:bg-rose-950/20' : 'border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500'
                   }`}
                   required
                 />
-                {formErrors.email && <p className="text-[11px] text-rose-600 font-medium">{formErrors.email}</p>}
+                {formErrors.email && <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{formErrors.email}</p>}
               </div>
 
               {/* Mobile Number */}
               <div className="space-y-1">
-                <label htmlFor="user-mobile" className="font-semibold text-slate-700 flex items-center gap-1">
+                <label htmlFor="user-mobile" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                   <Phone className="w-3.5 h-3.5 text-slate-400" />
                   <span>Mobile Number <span className="text-rose-500">*</span></span>
                 </label>
@@ -269,12 +269,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   }}
                   placeholder="e.g. +91 98765 43210"
                   className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 transition ${
-                    formErrors.mobileNumber ? 'border-rose-400 bg-rose-50/20' : 'border-[#CBD5E1] bg-white'
+                    formErrors.mobileNumber ? 'border-rose-400 bg-rose-50/20 dark:bg-rose-950/20' : 'border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500'
                   }`}
                   required
                 />
                 {formErrors.mobileNumber && (
-                  <p className="text-[11px] text-rose-600 font-medium">{formErrors.mobileNumber}</p>
+                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{formErrors.mobileNumber}</p>
                 )}
               </div>
             </div>
@@ -282,19 +282,19 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
           {/* SECTION 2: ROLE & TEAM ALLOCATION */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 mb-3">
               Role & Team Allocation
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {/* Role Selection */}
               <div className="space-y-1">
-                <label htmlFor="user-role" className="font-semibold text-slate-700 flex items-center gap-1">
+                <label htmlFor="user-role" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                   <Shield className="w-3.5 h-3.5 text-slate-400" />
                   <span>Role <span className="text-rose-500">*</span></span>
                 </label>
                 {isManager ? (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium cursor-not-allowed">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-not-allowed">
                     <Lock className="w-3.5 h-3.5 text-slate-400" />
                     <span>Career Counsellor</span>
                     <span className="ml-auto text-[10px] text-slate-400 font-semibold uppercase">Authorized</span>
@@ -304,26 +304,26 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     id="user-role"
                     value={role}
                     onChange={(e) => setRole(e.target.value as UserRole)}
-                    className="w-full px-3 py-2 text-xs border border-[#CBD5E1] bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
+                    className="w-full px-3 py-2 text-xs border border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
                   >
                     <option value="SALES_EMPLOYEE">Career Counsellor (Sales Employee)</option>
                     <option value="MANAGER">Sales Manager</option>
                     <option value="ADMIN">System Administrator</option>
                   </select>
                 )}
-                {formErrors.role && <p className="text-[11px] text-rose-600 font-medium">{formErrors.role}</p>}
+                {formErrors.role && <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{formErrors.role}</p>}
               </div>
 
               {/* Team Allocation */}
               <div className="space-y-1">
-                <label htmlFor="user-team" className="font-semibold text-slate-700 flex items-center gap-1">
+                <label htmlFor="user-team" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                   <Building className="w-3.5 h-3.5 text-slate-400" />
                   <span>
                     Team {role === 'SALES_EMPLOYEE' && <span className="text-rose-500">*</span>}
                   </span>
                 </label>
                 {isManager ? (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium cursor-not-allowed">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium cursor-not-allowed">
                     <Lock className="w-3.5 h-3.5 text-slate-400" />
                     <span className="truncate">{managerAuthorizedTeamName}</span>
                     <span className="ml-auto text-[10px] text-slate-400 font-semibold uppercase">Locked</span>
@@ -337,7 +337,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                       if (formErrors.teamId) setFormErrors((prev) => ({ ...prev, teamId: '' }));
                     }}
                     className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer ${
-                      formErrors.teamId ? 'border-rose-400 bg-rose-50/20' : 'border-[#CBD5E1] bg-white'
+                      formErrors.teamId ? 'border-rose-400 bg-rose-50/20 dark:bg-rose-950/20' : 'border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100'
                     }`}
                   >
                     <option value="">Select Team...</option>
@@ -348,21 +348,21 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     ))}
                   </select>
                 )}
-                {formErrors.teamId && <p className="text-[11px] text-rose-600 font-medium">{formErrors.teamId}</p>}
+                {formErrors.teamId && <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{formErrors.teamId}</p>}
               </div>
             </div>
           </div>
 
           {/* SECTION 3: OPTIONAL EMPLOYMENT DETAILS */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B] dark:text-slate-400 mb-3">
               Optional Employment Details
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {/* Designation */}
               <div className="space-y-1">
-                <label htmlFor="user-designation" className="font-semibold text-slate-700 flex items-center gap-1">
+                <label htmlFor="user-designation" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                   <Briefcase className="w-3.5 h-3.5 text-slate-400" />
                   <span>Designation</span>
                 </label>
@@ -372,13 +372,13 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   value={designation}
                   onChange={(e) => setDesignation(e.target.value)}
                   placeholder="e.g. Senior Career Counsellor"
-                  className="w-full px-3 py-2 text-xs border border-[#CBD5E1] bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
+                  className="w-full px-3 py-2 text-xs border border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
                 />
               </div>
 
               {/* Department */}
               <div className="space-y-1">
-                <label htmlFor="user-department" className="font-semibold text-slate-700 flex items-center gap-1">
+                <label htmlFor="user-department" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                   <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
                   <span>Department</span>
                 </label>
@@ -388,13 +388,13 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   placeholder="e.g. Admissions & Counselling"
-                  className="w-full px-3 py-2 text-xs border border-[#CBD5E1] bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
+                  className="w-full px-3 py-2 text-xs border border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
                 />
               </div>
 
               {/* Work Location */}
               <div className="space-y-1">
-                <label htmlFor="user-location" className="font-semibold text-slate-700 flex items-center gap-1">
+                <label htmlFor="user-location" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
                   <span>Work Location</span>
                 </label>
@@ -404,13 +404,13 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   value={workLocation}
                   onChange={(e) => setWorkLocation(e.target.value)}
                   placeholder="e.g. Bangalore HQ / Remote"
-                  className="w-full px-3 py-2 text-xs border border-[#CBD5E1] bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
+                  className="w-full px-3 py-2 text-xs border border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
                 />
               </div>
 
               {/* Date of Joining */}
               <div className="space-y-1">
-                <label htmlFor="user-doj" className="font-semibold text-slate-700 flex items-center gap-1">
+                <label htmlFor="user-doj" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
                   <span>Date of Joining</span>
                 </label>
@@ -419,20 +419,20 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   id="user-doj"
                   value={dateOfJoining}
                   onChange={(e) => setDateOfJoining(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-[#CBD5E1] bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
+                  className="w-full px-3 py-2 text-xs border border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
                 />
               </div>
             </div>
           </div>
 
           {/* SECTION 4: INITIAL PASSWORD */}
-          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
-              <label htmlFor="user-password" className="font-semibold text-slate-700 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-slate-500" />
+              <label htmlFor="user-password" className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                 <span>Initial Password (Optional)</span>
               </label>
-              <span className="text-[10px] text-slate-400 font-medium">Leave blank for system default</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Leave blank for system default</span>
             </div>
             <input
               type="password"
@@ -444,23 +444,23 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               }}
               placeholder="e.g. Welcome@2026 (min 8 characters)"
               className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 ${
-                formErrors.password ? 'border-rose-400 bg-rose-50/20' : 'border-[#CBD5E1] bg-white'
+                formErrors.password ? 'border-rose-400 bg-rose-50/20 dark:bg-rose-950/20' : 'border-[#CBD5E1] dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500'
               }`}
             />
-            {formErrors.password && <p className="text-[11px] text-rose-600 font-medium">{formErrors.password}</p>}
-            <p className="text-[11px] text-slate-500">
+            {formErrors.password && <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{formErrors.password}</p>}
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
               The user will be prompted to choose a new password upon first sign-in.
             </p>
           </div>
 
           {/* Modal Actions */}
-          <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-end gap-2.5">
+          <div className="pt-3 border-t border-[#E2E8F0] dark:border-slate-800 flex items-center justify-end gap-2.5">
             <button
               type="button"
               id="cancel-create-user-btn"
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition shadow-2xs cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition shadow-2xs cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>

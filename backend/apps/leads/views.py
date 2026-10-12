@@ -8,23 +8,58 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, F
 from django.utils import timezone
-from datetime import timedelta
-from .models import PipelineStage, Lead, LeadAssignmentHistory, LeadStageHistory, LeadImportBatch
+from decimal import Decimal
+import zoneinfo
+from datetime import timedelta, datetime, time, timezone as dt_timezone
+from django.conf import settings
+from .models import (
+    PipelineStage,
+    Lead,
+    LeadAssignmentHistory,
+    LeadStageHistory,
+    LeadImportBatch,
+    PreCloserFinancial,
+    LeadFinancialHistory
+)
 from .serializers import (
     PipelineStageSerializer,
     LeadSerializer,
     LeadAssignmentHistorySerializer,
     LeadStageHistorySerializer,
     LeadChangeStageSerializer,
-    LeadImportBatchSerializer
+    LeadImportBatchSerializer,
+    PreCloserFinancialSerializer,
+    LeadFinancialHistorySerializer,
+    PreCloserFinancialUpdateSerializer,
+    is_pending_closure_stage
 )
 from apps.authentication.permissions import LeadPermission, IsAdminRole, IsAdminOrManagerRole
 from apps.authentication.models import User, UserRole
+
+
+def check_lead_access(user, lead):
+    """
+    Role-based lead access control:
+    - Admin: organization-wide access.
+    - Manager: authorized team access.
+    - Sales Employee: assigned leads access.
+    """
+    if user.is_superuser or user.role == UserRole.ADMIN:
+        return True
+    elif user.role == UserRole.MANAGER:
+        managed_team = getattr(user, 'managed_team', None)
+        team_id = managed_team.id if managed_team else user.team_id
+        return (lead.team_id == team_id)
+    elif user.role == UserRole.SALES_EMPLOYEE:
+        return (lead.assigned_employee_id == user.id)
+    return False
+
 from apps.teams.models import Team
 from apps.audit.models import AuditEvent
-from apps.communications.models import CommunicationLog
+from apps.communications.models import CommunicationLog, CommunicationChannel, CommunicationStatus
+from apps.reports.models import ReportSchedule
 from .import_service import (
     save_temp_import_file,
     get_temp_file_path,
@@ -200,22 +235,8 @@ class LeadChangeStageView(APIView):
         lead = generics.get_object_or_404(Lead, id=pk)
         user = request.user
 
-        # Authorization scoping:
-        # Admin: All leads
-        # Manager: Only leads belonging to manager's authorized team
-        # Sales Employee: Only leads assigned to this employee
-        if user.is_superuser or user.role == UserRole.ADMIN:
-            authorized = True
-        elif user.role == UserRole.MANAGER:
-            managed_team = getattr(user, 'managed_team', None)
-            team_id = managed_team.id if managed_team else user.team_id
-            authorized = (lead.team_id == team_id)
-        elif user.role == UserRole.SALES_EMPLOYEE:
-            authorized = (lead.assigned_employee_id == user.id)
-        else:
-            authorized = False
-
-        if not authorized:
+        # Authorization scoping via check_lead_access helper
+        if not check_lead_access(user, lead):
             return Response(
                 {"detail": "You do not have permission to change the stage for this lead."},
                 status=status.HTTP_403_FORBIDDEN
@@ -273,6 +294,50 @@ class LeadChangeStageView(APIView):
                 note=note
             )
 
+            # Atomic Pending Closure financial record creation/update & audit history
+            if is_pending_closure_stage(destination_stage):
+                agreed = serializer.validated_data['agreed_amount']
+
+                paid = serializer.validated_data['amount_paid']
+
+                fin = PreCloserFinancial.objects.select_for_update().filter(lead=locked_lead).first()
+                if fin:
+                    fin.agreed_amount = agreed
+                    fin.amount_paid = paid
+                    fin.updated_by = user
+                    fin.save()
+                else:
+                    fin = PreCloserFinancial.objects.create(
+                        lead=locked_lead,
+                        agreed_amount=agreed,
+                        amount_paid=paid,
+                        created_by=user,
+                        updated_by=user
+                    )
+
+                LeadFinancialHistory.objects.create(
+                    lead=locked_lead,
+                    financial_record=fin,
+                    agreed_amount=fin.agreed_amount,
+                    amount_paid=fin.amount_paid,
+                    outstanding_balance=fin.outstanding_balance,
+                    changed_by=user,
+                    note=note
+                )
+
+                AuditEvent.objects.create(
+                    event_type='LEAD_FINANCIAL_RECORDED',
+                    user=user,
+                    details={
+                        'lead_id': locked_lead.id,
+                        'lead_code': locked_lead.lead_id,
+                        'agreed_amount': str(fin.agreed_amount),
+                        'amount_paid': str(fin.amount_paid),
+                        'outstanding_balance': str(fin.outstanding_balance),
+                        'note': note
+                    }
+                )
+
             AuditEvent.objects.create(
                 event_type='LEAD_STAGE_CHANGED',
                 user=user,
@@ -293,6 +358,99 @@ class LeadChangeStageView(APIView):
             "lead": lead_serializer.data,
             "stage_history": LeadStageHistorySerializer(stage_history).data
         }, status=status.HTTP_200_OK)
+
+
+class LeadFinancialView(APIView):
+    """
+    GET /api/leads/<pk>/financial/
+    Returns the Pre-Closer financial record and audit history for the lead.
+
+    PUT /api/leads/<pk>/financial/
+    Updates the Pre-Closer financial record with full audit history tracking.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk, *args, **kwargs):
+        lead = generics.get_object_or_404(Lead, id=pk)
+        if not check_lead_access(request.user, lead):
+            return Response(
+                {"detail": "You do not have permission to access financial information for this lead."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        fin = getattr(lead, 'pre_closer_financial', None)
+        if not fin:
+            return Response(
+                {"detail": "No financial record found for this lead."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        history = lead.financial_history.all().order_by('-timestamp')
+        return Response({
+            "financial": PreCloserFinancialSerializer(fin).data,
+            "history": LeadFinancialHistorySerializer(history, many=True).data
+        }, status=status.HTTP_200_OK)
+
+    def put(self, request, pk, *args, **kwargs):
+        lead = generics.get_object_or_404(Lead, id=pk)
+        if not check_lead_access(request.user, lead):
+            return Response(
+                {"detail": "You do not have permission to update financial information for this lead."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = PreCloserFinancialUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        agreed = serializer.validated_data['agreed_amount']
+        paid = serializer.validated_data['amount_paid']
+        note = serializer.validated_data.get('note', '')
+
+        with transaction.atomic():
+            locked_lead = Lead.objects.select_for_update().get(id=pk)
+            fin = PreCloserFinancial.objects.select_for_update().filter(lead=locked_lead).first()
+            if fin:
+                fin.agreed_amount = agreed
+                fin.amount_paid = paid
+                fin.updated_by = request.user
+                fin.save()
+            else:
+                fin = PreCloserFinancial.objects.create(
+                    lead=locked_lead,
+                    agreed_amount=agreed,
+                    amount_paid=paid,
+                    created_by=request.user,
+                    updated_by=request.user
+                )
+
+            history_entry = LeadFinancialHistory.objects.create(
+                lead=locked_lead,
+                financial_record=fin,
+                agreed_amount=fin.agreed_amount,
+                amount_paid=fin.amount_paid,
+                outstanding_balance=fin.outstanding_balance,
+                changed_by=request.user,
+                note=note
+            )
+
+            AuditEvent.objects.create(
+                event_type='LEAD_FINANCIAL_RECORDED',
+                user=request.user,
+                details={
+                    'lead_id': locked_lead.id,
+                    'lead_code': locked_lead.lead_id,
+                    'agreed_amount': str(fin.agreed_amount),
+                    'amount_paid': str(fin.amount_paid),
+                    'outstanding_balance': str(fin.outstanding_balance),
+                    'note': note
+                }
+            )
+
+        return Response({
+            "detail": "Financial record successfully updated.",
+            "financial": PreCloserFinancialSerializer(fin).data,
+            "history_entry": LeadFinancialHistorySerializer(history_entry).data
+        }, status=status.HTTP_200_OK)
+
 
 
 class LeadTimelineView(APIView):
@@ -445,12 +603,39 @@ class LeadTimelineView(APIView):
                 }
             })
 
-        # 5. Audit events for this lead (exclude duplicates already captured above)
+        # 5. Financial history (Pending Closure updates)
+        fin_histories = LeadFinancialHistory.objects.filter(lead=lead).select_related('changed_by').order_by('-timestamp')
+
+        for fh in fin_histories:
+            actor = fh.changed_by.get_full_name() or fh.changed_by.username if fh.changed_by else 'System'
+            events.append({
+                'id': f"fin-{fh.id}",
+                'event_type': 'LEAD_FINANCIAL_UPDATED',
+                'title': "Financial Record Updated",
+                'description': f"Agreed: ₹{fh.agreed_amount:,.2f} | Paid: ₹{fh.amount_paid:,.2f} | Outstanding: ₹{fh.outstanding_balance:,.2f}",
+                'actor_name': actor,
+                'actor_id': fh.changed_by_id,
+                'timestamp': fh.timestamp.isoformat(),
+                'timestamp_display': fh.timestamp.strftime('%b %d, %Y %I:%M %p'),
+                'note': fh.note or '',
+                'before_value': None,
+                'after_value': f"₹{fh.agreed_amount:,.2f}",
+                'outcome': None,
+                'details': {
+                    'agreed_amount': str(fh.agreed_amount),
+                    'amount_paid': str(fh.amount_paid),
+                    'outstanding_balance': str(fh.outstanding_balance),
+                    'note': fh.note or ''
+                }
+            })
+
+        # 6. Audit events for this lead (exclude duplicates already captured above)
         audits = AuditEvent.objects.filter(
             Q(details__lead_id=lead.id) | Q(details__lead_id=str(lead.id))
         ).exclude(
-            event_type__in=['LEAD_STAGE_CHANGED', 'LEAD_ASSIGNED', 'LEAD_REASSIGNED', 'LEAD_CREATED']
+            event_type__in=['LEAD_STAGE_CHANGED', 'LEAD_ASSIGNED', 'LEAD_REASSIGNED', 'LEAD_CREATED', 'LEAD_FINANCIAL_RECORDED']
         ).select_related('user').order_by('-timestamp')
+
 
         for ae in audits:
             actor = ae.user.get_full_name() or ae.user.username if ae.user else 'System'
@@ -1304,55 +1489,227 @@ class LeadAssignView(APIView):
 
 class DashboardStatsView(APIView):
     """
-    Role-scoped dashboard analytics aggregation.
-    - Admin: organization-wide KPIs, full pipeline distribution, team performance overview, recent activity.
-    - Manager: team-scoped KPIs, team pipeline distribution, team member performance matrix, follow-up monitoring, team activity.
-    - Counsellor: personal KPIs, personal pipeline distribution, today's & overdue follow-ups, personal activity.
+    Operational Control Centre dashboard analytics aggregation.
+    - Admin: organization-wide KPIs, full pipeline distribution, team performance overview,
+      pending closure financials, communications activity, attention required, and system health.
+    - Manager: team-scoped KPIs, team pipeline distribution, member performance matrix,
+      team communications, follow-ups, and team-scoped financials.
+    - Counsellor: personal KPIs, personal pipeline distribution, today's & overdue follow-ups,
+      personal communications, and assigned financial records.
     Strictly enforces role-based access; never leaks data across scopes.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        now = timezone.now()
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = today_start + timedelta(days=1)
 
-        period_days = request.query_params.get('days')
+        # 1. Date & Timezone Resolution (Asia/Kolkata Business Default)
         try:
-            days_int = int(period_days) if period_days else 30
-        except ValueError:
-            days_int = 30
-        period_start = now - timedelta(days=days_int)
+            tz = zoneinfo.ZoneInfo('Asia/Kolkata')
+        except Exception:
+            tz = timezone.get_current_timezone()
 
-        # 1. Base Queryset by Role
+        now_utc = timezone.now()
+        now_local = datetime.now(tz)
+        today_local = now_local.date()
+
+        today_start_local = datetime.combine(today_local, time.min, tzinfo=tz)
+        today_end_local = datetime.combine(today_local, time.max, tzinfo=tz)
+        today_start_utc = today_start_local.astimezone(dt_timezone.utc)
+        today_end_utc = today_end_local.astimezone(dt_timezone.utc)
+        next_7d_end_utc = now_utc + timedelta(days=7)
+
+        # Parse date filter parameters
+        preset = request.query_params.get('preset')
+        days_param = request.query_params.get('days')
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        period_start = None
+        period_end = None
+        applied_preset = '30d'
+
+        if start_date_str and end_date_str:
+            applied_preset = 'custom'
+            try:
+                sd = datetime.strptime(start_date_str.strip(), '%Y-%m-%d').date()
+                ed = datetime.strptime(end_date_str.strip(), '%Y-%m-%d').date()
+                if sd > ed:
+                    return Response(
+                        {"error": "Start date cannot be after end date."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                period_start = datetime.combine(sd, time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = datetime.combine(ed, time.max, tzinfo=tz).astimezone(dt_timezone.utc)
+            except ValueError:
+                return Response(
+                    {"error": "Invalid date format. Expected YYYY-MM-DD."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        elif preset:
+            p = preset.lower().strip()
+            applied_preset = p
+            if p == 'today':
+                period_start = today_start_utc
+                period_end = today_end_utc
+            elif p == 'yesterday':
+                yd = today_local - timedelta(days=1)
+                period_start = datetime.combine(yd, time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = datetime.combine(yd, time.max, tzinfo=tz).astimezone(dt_timezone.utc)
+            elif p in ('7d', 'last_7_days', 'last_7'):
+                period_start = datetime.combine(today_local - timedelta(days=6), time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = today_end_utc
+            elif p in ('30d', 'last_30_days', 'last_30'):
+                period_start = datetime.combine(today_local - timedelta(days=29), time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = today_end_utc
+            elif p in ('this_month', 'month'):
+                first_d = today_local.replace(day=1)
+                period_start = datetime.combine(first_d, time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = today_end_utc
+            elif p in ('last_month', 'prev_month'):
+                first_this = today_local.replace(day=1)
+                last_prev = first_this - timedelta(days=1)
+                first_prev = last_prev.replace(day=1)
+                period_start = datetime.combine(first_prev, time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = datetime.combine(last_prev, time.max, tzinfo=tz).astimezone(dt_timezone.utc)
+            elif p in ('90d', 'last_90_days', 'last_90'):
+                period_start = datetime.combine(today_local - timedelta(days=89), time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = today_end_utc
+            elif p in ('all', 'all_time'):
+                period_start = None
+                period_end = None
+            else:
+                applied_preset = '30d'
+                period_start = datetime.combine(today_local - timedelta(days=29), time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = today_end_utc
+        elif days_param:
+            try:
+                days_int = int(days_param)
+                applied_preset = f"{days_int}d"
+                period_start = datetime.combine(today_local - timedelta(days=days_int - 1), time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = today_end_utc
+            except ValueError:
+                period_start = datetime.combine(today_local - timedelta(days=29), time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+                period_end = today_end_utc
+        else:
+            # Default preset: 30 days
+            period_start = datetime.combine(today_local - timedelta(days=29), time.min, tzinfo=tz).astimezone(dt_timezone.utc)
+            period_end = today_end_utc
+
+        # 2. Base Queryset by Role Authorization
         if user.is_superuser or user.role == UserRole.ADMIN:
             role = 'ADMIN'
             base_qs = Lead.objects.filter(archived_at__isnull=True)
             team_id = None
+            # Admin can filter by team_id
+            team_id_param = request.query_params.get('team_id')
+            if team_id_param and team_id_param != 'ALL':
+                try:
+                    target_tid = int(team_id_param)
+                    base_qs = base_qs.filter(team_id=target_tid)
+                    team_id = target_tid
+                except ValueError:
+                    pass
+            # Admin can filter by employee_id
+            emp_id_param = request.query_params.get('employee_id')
+            if emp_id_param and emp_id_param != 'ALL':
+                try:
+                    target_eid = int(emp_id_param)
+                    base_qs = base_qs.filter(assigned_employee_id=target_eid)
+                except ValueError:
+                    pass
+
         elif user.role == UserRole.MANAGER:
             role = 'MANAGER'
             managed_team = getattr(user, 'managed_team', None)
             team_id = managed_team.id if managed_team else user.team_id
             base_qs = Lead.objects.filter(team_id=team_id, archived_at__isnull=True)
+            # Manager can filter only by employees in their team
+            emp_id_param = request.query_params.get('employee_id')
+            if emp_id_param and emp_id_param != 'ALL':
+                try:
+                    target_eid = int(emp_id_param)
+                    # Verify target employee is in manager's team or is the manager
+                    is_team_member = User.objects.filter(id=target_eid, team_id=team_id).exists() or (target_eid == user.id)
+                    if is_team_member:
+                        base_qs = base_qs.filter(assigned_employee_id=target_eid)
+                except ValueError:
+                    pass
+
         elif user.role == UserRole.SALES_EMPLOYEE:
             role = 'SALES_EMPLOYEE'
             base_qs = Lead.objects.filter(assigned_employee_id=user.id, archived_at__isnull=True)
             team_id = user.team_id
+
         else:
             return Response({"error": "Unauthorized role"}, status=status.HTTP_403_FORBIDDEN)
 
-        # Aggregated KPI Calculations
+        # 3. Additional Filters (Stage, Source, Search)
+        stage_id_param = request.query_params.get('stage_id')
+        if stage_id_param and stage_id_param != 'ALL':
+            if stage_id_param == 'UNASSIGNED':
+                base_qs = base_qs.filter(stage__isnull=True)
+            else:
+                try:
+                    base_qs = base_qs.filter(stage_id=int(stage_id_param))
+                except ValueError:
+                    pass
+
+        source_param = request.query_params.get('source')
+        if source_param and source_param != 'ALL':
+            base_qs = base_qs.filter(source__iexact=source_param.strip())
+
+        search_param = request.query_params.get('search')
+        if search_param and search_param.strip():
+            s = search_param.strip()
+            base_qs = base_qs.filter(
+                Q(name__icontains=s) |
+                Q(lead_id__icontains=s) |
+                Q(phone__icontains=s) |
+                Q(email__icontains=s) |
+                Q(assigned_employee__username__icontains=s) |
+                Q(assigned_employee__first_name__icontains=s) |
+                Q(assigned_employee__last_name__icontains=s)
+            )
+
+        # 4. Executive Summary KPI Calculations
         total_leads = base_qs.count()
-        active_leads = base_qs.exclude(status__iexact='Lost').exclude(stage__name__icontains='lost').count()
-        created_in_period = base_qs.filter(created_at__gte=period_start).count()
+        # Active leads: excludes Lost (for test suite and backward compatibility)
+        active_leads = base_qs.exclude(status__iexact='Lost').exclude(stage__name__icontains='lost').exclude(stage__order=12).count()
+        # Active pipeline leads: operational control centre definition (excludes terminal stages: Lost and Enrolled)
+        active_pipeline_leads = base_qs.exclude(stage__order=12).exclude(stage__order=10).exclude(
+            status__iexact='Lost'
+        ).exclude(status__iexact='Enrolled').exclude(
+            stage__name__icontains='lost'
+        ).exclude(stage__name__icontains='enrolled').count()
+
+        if period_start and period_end:
+            created_in_period = base_qs.filter(created_at__gte=period_start, created_at__lte=period_end).count()
+        else:
+            created_in_period = total_leads
+
         enrolled_leads = base_qs.filter(
             Q(stage__name__icontains='enrolled') | Q(status__iexact='enrolled') | Q(stage__order=10)
         ).count()
+
         lost_leads = base_qs.filter(
             Q(stage__name__icontains='lost') | Q(status__iexact='lost') | Q(stage__order=12)
         ).count()
 
+        pending_closure_leads = base_qs.filter(
+            Q(stage__order=9) | Q(stage__name__iexact='Pending Closure')
+        ).count()
+
+        unassigned_count = base_qs.filter(assigned_employee__isnull=True).count()
+        assigned_count = base_qs.filter(assigned_employee__isnull=False).count()
+
+        # Follow-up aggregates
+        pending_followups = base_qs.filter(next_follow_up__isnull=False).count()
+        followups_today = base_qs.filter(next_follow_up__gte=today_start_utc, next_follow_up__lte=today_end_utc).count()
+        followups_overdue = base_qs.filter(next_follow_up__isnull=False, next_follow_up__lt=now_utc).count()
+        followups_next_7_days = base_qs.filter(next_follow_up__gt=now_utc, next_follow_up__lte=next_7d_end_utc).count()
+
+        # Legacy revenue fields for backwards compatibility with tests
         rev_aggregates = base_qs.aggregate(
             total_rev=Sum('estimated_revenue'),
             total_fees=Sum('placement_fee')
@@ -1360,27 +1717,15 @@ class DashboardStatsView(APIView):
         total_estimated_revenue = float(rev_aggregates['total_rev'] or 0)
         total_placement_fees = float(rev_aggregates['total_fees'] or 0)
 
-        # Unassigned leads count
-        if role == 'ADMIN':
-            unassigned_count = Lead.objects.filter(assigned_employee__isnull=True, archived_at__isnull=True).count()
-            assigned_count = Lead.objects.filter(assigned_employee__isnull=False, archived_at__isnull=True).count()
-        elif role == 'MANAGER':
-            unassigned_count = Lead.objects.filter(team_id=team_id, assigned_employee__isnull=True, archived_at__isnull=True).count()
-            assigned_count = base_qs.filter(assigned_employee__isnull=False).count()
-        else:
-            unassigned_count = 0
-            assigned_count = total_leads
-
-        pending_followups = base_qs.filter(next_follow_up__isnull=False).count()
-        followups_today = base_qs.filter(next_follow_up__gte=today_start, next_follow_up__lt=today_end).count()
-        followups_overdue = base_qs.filter(next_follow_up__lt=now).count()
-
         kpis = {
             'total_leads': total_leads,
             'active_leads': active_leads,
+            'active_pipeline_leads': active_pipeline_leads,
+            'new_leads_in_period': created_in_period,
             'created_in_period': created_in_period,
             'enrolled_leads': enrolled_leads,
             'lost_leads': lost_leads,
+            'pending_closure_leads': pending_closure_leads,
             'unassigned_leads': unassigned_count,
             'assigned_leads': assigned_count,
             'total_estimated_revenue': total_estimated_revenue,
@@ -1388,105 +1733,171 @@ class DashboardStatsView(APIView):
             'pending_followups': pending_followups,
             'followups_today': followups_today,
             'followups_overdue': followups_overdue,
+            'followups_next_7_days': followups_next_7_days,
         }
 
-        # 2. Pipeline Stages Distribution
+        # 5. Pending Closure Financial Control Centre
+        pc_stage = PipelineStage.objects.filter(Q(name__iexact='Pending Closure') | Q(order=9)).first()
+        pc_leads = base_qs.filter(stage=pc_stage) if pc_stage else Lead.objects.none()
+        pc_leads_count = pc_leads.count()
+
+        # Query PreCloserFinancial independently to prevent Cartesian double-counting
+        pc_financials = PreCloserFinancial.objects.filter(lead__in=pc_leads)
+        fin_agg = pc_financials.aggregate(
+            tot_agreed=Sum('agreed_amount'),
+            tot_paid=Sum('amount_paid')
+        )
+        total_agreed_amount = float(fin_agg['tot_agreed'] or Decimal('0.00'))
+        total_amount_paid = float(fin_agg['tot_paid'] or Decimal('0.00'))
+        total_outstanding_balance = round(total_agreed_amount - total_amount_paid, 2)
+        missing_financial_count = pc_leads.filter(pre_closer_financial__isnull=True).count()
+
+        # Detailed table of Pending Closure leads with outstanding balances or missing records
+        outstanding_leads_table = []
+        for pl in pc_leads.select_related('pre_closer_financial', 'assigned_employee', 'team', 'stage')[:50]:
+            has_f = hasattr(pl, 'pre_closer_financial') and pl.pre_closer_financial is not None
+            agreed = float(pl.pre_closer_financial.agreed_amount) if has_f else 0.0
+            paid = float(pl.pre_closer_financial.amount_paid) if has_f else 0.0
+            bal = round(agreed - paid, 2)
+            is_missing = not has_f
+            if is_missing or bal > 0:
+                outstanding_leads_table.append({
+                    'lead_id': pl.id,
+                    'lead_code': pl.lead_id or f"#{pl.id}",
+                    'name': pl.name or pl.title or pl.contact_name or 'Unnamed Lead',
+                    'phone': pl.phone or '',
+                    'email': pl.email or '',
+                    'assigned_employee_id': pl.assigned_employee_id,
+                    'assigned_employee_name': (pl.assigned_employee.get_full_name() or pl.assigned_employee.username) if pl.assigned_employee else 'Unassigned',
+                    'team_id': pl.team_id,
+                    'team_name': pl.team.name if pl.team else 'Unassigned',
+                    'agreed_amount': agreed,
+                    'amount_paid': paid,
+                    'outstanding_balance': bal,
+                    'is_missing_financial': is_missing,
+                    'stage_id': pl.stage_id,
+                    'stage_name': pl.stage.name if pl.stage else 'Pending Closure',
+                })
+        outstanding_leads_table.sort(key=lambda x: (not x['is_missing_financial'], -x['outstanding_balance']))
+        outstanding_leads_table = outstanding_leads_table[:25]
+
+        pending_closure_financials = {
+            'leads_count': pc_leads_count,
+            'total_agreed_amount': total_agreed_amount,
+            'total_amount_paid': total_amount_paid,
+            'total_outstanding_balance': total_outstanding_balance,
+            'missing_financial_count': missing_financial_count,
+            'outstanding_leads_table': outstanding_leads_table,
+            'currency': 'INR',
+        }
+
+        # 6. Pipeline Stages Distribution (12 Canonical Stages)
         stages = PipelineStage.objects.filter(is_active=True).order_by('order', 'id')
         stage_counts_qs = base_qs.values('stage_id').annotate(count=Count('id'))
         stage_counts_map = {item['stage_id']: item['count'] for item in stage_counts_qs}
+
+        # Historical transitions into each stage during the selected period
+        history_entries_map = {}
+        hist_qs = LeadStageHistory.objects.filter(lead__in=base_qs)
+        if period_start and period_end:
+            hist_qs = hist_qs.filter(timestamp__gte=period_start, timestamp__lte=period_end)
+        for item in hist_qs.values('to_stage_id').annotate(count=Count('id')):
+            if item['to_stage_id']:
+                history_entries_map[item['to_stage_id']] = item['count']
 
         pipeline_overview = []
         for st in stages:
             count = stage_counts_map.get(st.id, 0)
             pct = round((count / total_leads * 100), 1) if total_leads > 0 else 0
+            entries = history_entries_map.get(st.id, 0)
             pipeline_overview.append({
                 'id': st.id,
                 'name': st.name,
                 'order': st.order,
                 'count': count,
                 'percentage': pct,
+                'entries_in_period': entries,
+                'is_pending_closure': (st.order == 9 or st.name.lower() == 'pending closure'),
+                'is_enrolled': (st.order == 10 or 'enrolled' in st.name.lower()),
             })
 
-        # 3. Team Overview (Admin) & Member Performance (Manager/Admin)
-        team_overview = []
-        member_performance = []
+        # 7. Communications Activity & Status Breakdown
+        comm_channel_param = request.query_params.get('channel')
+        comm_qs = CommunicationLog.objects.filter(lead__in=base_qs).select_related('lead', 'initiated_by')
+        if comm_channel_param and comm_channel_param.upper() in ('CALL', 'EMAIL', 'WHATSAPP'):
+            comm_qs = comm_qs.filter(channel=comm_channel_param.upper())
+        if period_start and period_end:
+            comm_qs = comm_qs.filter(created_at__gte=period_start, created_at__lte=period_end)
 
-        if role == 'ADMIN':
-            teams = Team.objects.all().prefetch_related('members').select_related('manager')
-            for t in teams:
-                t_leads = Lead.objects.filter(team=t, archived_at__isnull=True)
-                t_enrolled = t_leads.filter(Q(stage__name__icontains='enrolled') | Q(status__iexact='enrolled') | Q(stage__order=10)).count()
-                t_lost = t_leads.filter(Q(stage__name__icontains='lost') | Q(status__iexact='lost') | Q(stage__order=12)).count()
-                t_followups = t_leads.filter(next_follow_up__isnull=False).count()
-                t_fees = float(t_leads.aggregate(Sum('placement_fee'))['placement_fee__sum'] or 0)
-                t_rev = float(t_leads.aggregate(Sum('estimated_revenue'))['estimated_revenue__sum'] or 0)
-                team_overview.append({
-                    'id': t.id,
-                    'team_id': t.id,
-                    'name': t.name,
-                    'team_name': t.name,
-                    'manager_name': t.manager.username if t.manager else 'Unassigned',
-                    'members_count': t.members.count(),
-                    'total_leads': t_leads.count(),
-                    'assigned_leads': t_leads.filter(assigned_employee__isnull=False).count(),
-                    'unassigned_leads': t_leads.filter(assigned_employee__isnull=True).count(),
-                    'enrolled_leads': t_enrolled,
-                    'lost_leads': t_lost,
-                    'pending_followups': t_followups,
-                    'placement_fees': t_fees,
-                    'total_placement_fees': t_fees,
-                    'estimated_revenue': t_rev,
-                    'total_estimated_revenue': t_rev,
-                })
+        calls_qs = comm_qs.filter(channel=CommunicationChannel.CALL)
+        call_attempts = calls_qs.count()
+        call_blocked = calls_qs.filter(status=CommunicationStatus.BLOCKED).count()
+        call_failed = calls_qs.filter(status=CommunicationStatus.FAILED).count()
+        call_success = calls_qs.filter(status=CommunicationStatus.SUCCESS).count()
 
-        if role in ['ADMIN', 'MANAGER']:
-            member_qs = User.objects.filter(is_active=True)
-            if role == 'MANAGER':
-                member_qs = member_qs.filter(Q(team_id=team_id) | Q(id=user.id))
-            else:
-                member_qs = member_qs.filter(role=UserRole.SALES_EMPLOYEE)
+        email_qs = comm_qs.filter(channel=CommunicationChannel.EMAIL)
+        email_attempts = email_qs.count()
+        email_accepted = email_qs.filter(status=CommunicationStatus.SUCCESS).count()
+        email_failed = email_qs.filter(status=CommunicationStatus.FAILED).count()
+        email_blocked = email_qs.filter(status=CommunicationStatus.BLOCKED).count()
 
-            for member in member_qs:
-                m_leads = Lead.objects.filter(assigned_employee=member, archived_at__isnull=True)
-                m_enrolled = m_leads.filter(Q(stage__name__icontains='enrolled') | Q(status__iexact='enrolled') | Q(stage__order=10)).count()
-                m_lost = m_leads.filter(Q(stage__name__icontains='lost') | Q(status__iexact='lost') | Q(stage__order=12)).count()
-                m_followups = m_leads.filter(next_follow_up__isnull=False).count()
-                m_rev = float(m_leads.aggregate(Sum('estimated_revenue'))['estimated_revenue__sum'] or 0)
-                m_fees = float(m_leads.aggregate(Sum('placement_fee'))['placement_fee__sum'] or 0)
+        wa_qs = comm_qs.filter(channel=CommunicationChannel.WHATSAPP)
+        wa_attempts = wa_qs.count()
+        wa_accepted = wa_qs.filter(status=CommunicationStatus.SUCCESS).count()
+        wa_failed = wa_qs.filter(status=CommunicationStatus.FAILED).count()
+        wa_blocked = wa_qs.filter(status=CommunicationStatus.BLOCKED).count()
 
-                calls_count = CommunicationLog.objects.filter(initiated_by=member, channel='CALL').count()
-                messages_count = CommunicationLog.objects.filter(initiated_by=member, channel__in=['WHATSAPP', 'EMAIL']).count()
+        recent_comm_logs = []
+        for c in comm_qs.order_by('-created_at')[:15]:
+            recent_comm_logs.append({
+                'id': c.id,
+                'channel': c.channel,
+                'recipient': c.recipient,
+                'lead_id': c.lead_id,
+                'lead_code': c.lead.lead_id if c.lead else '',
+                'lead_name': c.lead.name or c.lead.contact_name if c.lead else '',
+                'status': c.status,
+                'error_message': c.error_message,
+                'initiated_by_name': c.initiated_by.username if c.initiated_by else 'System',
+                'created_at': c.created_at.isoformat(),
+            })
 
-                member_performance.append({
-                    'id': member.id,
-                    'name': member.get_full_name() or member.username,
-                    'username': member.username,
-                    'full_name': member.get_full_name() or member.username,
-                    'email': member.email,
-                    'role': member.role,
-                    'team_id': member.team_id,
-                    'team_name': member.team.name if member.team else '',
-                    'assigned_leads': m_leads.count(),
-                    'enrolled_leads': m_enrolled,
-                    'lost_leads': m_lost,
-                    'pending_followups': m_followups,
-                    'completed_followups': calls_count + messages_count,
-                    'pipeline_value': m_rev,
-                    'placement_fees': m_fees,
-                    'total_placement_fees': m_fees,
-                    'recorded_calls': calls_count,
-                    'recorded_messages': messages_count,
-                    'conversion_rate': round((m_enrolled / m_leads.count() * 100), 1) if m_leads.count() > 0 else 0,
-                })
+        communications_activity = {
+            'calls': {
+                'attempts': call_attempts,
+                'blocked': call_blocked,
+                'failed': call_failed,
+                'success': call_success,
+            },
+            'email': {
+                'attempts': email_attempts,
+                'accepted': email_accepted,
+                'failed': email_failed,
+                'blocked': email_blocked,
+            },
+            'whatsapp': {
+                'attempts': wa_attempts,
+                'accepted': wa_accepted,
+                'failed': wa_failed,
+                'blocked': wa_blocked,
+            },
+            'recent_logs': recent_comm_logs,
+            'metadata': {
+                'calls_note': 'Logged call attempts. Connected and outcome durations are not recorded by Callyzer mock.',
+                'email_note': 'SMTP gateway accepted dispatches. Does not guarantee inbox delivery or open tracking.',
+                'whatsapp_note': 'Meta Cloud API accepted dispatches. Does not guarantee message delivery or read receipts.',
+            }
+        }
 
-        # 4. Follow-Up Monitoring List (Overdue & Upcoming)
+        # 8. Follow-up & Action Queue (Today, Overdue, Next 7 Days, Stale)
         followup_leads_qs = base_qs.filter(next_follow_up__isnull=False).select_related(
             'assigned_employee', 'stage'
-        ).order_by('next_follow_up')[:20]
+        ).order_by('next_follow_up')[:25]
 
         followup_list = []
         for lead in followup_leads_qs:
-            is_overdue = bool(lead.next_follow_up and lead.next_follow_up < now)
+            is_overdue = bool(lead.next_follow_up and lead.next_follow_up < now_utc)
+            is_today = bool(lead.next_follow_up and today_start_utc <= lead.next_follow_up <= today_end_utc)
             followup_list.append({
                 'id': lead.id,
                 'lead_id': lead.id,
@@ -1502,9 +1913,155 @@ class DashboardStatsView(APIView):
                 'assigned_employee_id': lead.assigned_employee_id,
                 'assigned_employee_name': lead.assigned_employee.username if lead.assigned_employee else 'Unassigned',
                 'is_overdue': is_overdue,
+                'is_today': is_today,
             })
 
-        # 5. Recent Activity Log (combining AuditEvent and CommunicationLog)
+        active_no_followup_count = base_qs.exclude(stage__order=12).exclude(stage__order=10).filter(
+            next_follow_up__isnull=True
+        ).count()
+
+        followup_queue = {
+            'due_today': followups_today,
+            'overdue': followups_overdue,
+            'next_7_days': followups_next_7_days,
+            'no_followup_scheduled': active_no_followup_count,
+            'action_table': followup_list,
+        }
+
+        # 9. Attention Required Operational Panel
+        recent_comm_lead_ids = set(
+            CommunicationLog.objects.filter(
+                lead__in=base_qs,
+                created_at__gte=now_utc - timedelta(days=7)
+            ).values_list('lead_id', flat=True)
+        )
+        stale_leads_count = base_qs.exclude(stage__order=12).exclude(stage__order=10).exclude(
+            id__in=recent_comm_lead_ids
+        ).count()
+
+        outstanding_leads_count = pc_financials.filter(agreed_amount__gt=F('amount_paid')).count()
+        failed_comms_count = comm_qs.filter(status__in=[CommunicationStatus.FAILED, CommunicationStatus.BLOCKED]).count()
+        inactive_user_leads_count = base_qs.filter(assigned_employee__is_active=False).count()
+
+        attention_required = {
+            'overdue_followups': followups_overdue,
+            'unassigned_leads': unassigned_count,
+            'stale_leads': stale_leads_count,
+            'no_next_followup': active_no_followup_count,
+            'missing_financials': missing_financial_count,
+            'outstanding_balances': outstanding_leads_count,
+            'failed_communications': failed_comms_count,
+            'inactive_user_leads': inactive_user_leads_count,
+        }
+
+        # 10. Team Overview (Admin) & Member Performance (Admin / Manager / Counsellor)
+        team_overview = []
+        member_performance = []
+
+        if role == 'ADMIN':
+            teams = Team.objects.all().prefetch_related('members').select_related('manager')
+            for t in teams:
+                t_leads = Lead.objects.filter(team=t, archived_at__isnull=True)
+                t_enrolled = t_leads.filter(Q(stage__name__icontains='enrolled') | Q(status__iexact='enrolled') | Q(stage__order=10)).count()
+                t_lost = t_leads.filter(Q(stage__name__icontains='lost') | Q(status__iexact='lost') | Q(stage__order=12)).count()
+                t_pc = t_leads.filter(Q(stage__order=9) | Q(stage__name__iexact='Pending Closure')).count()
+                t_followups = t_leads.filter(next_follow_up__isnull=False).count()
+                t_overdue = t_leads.filter(next_follow_up__isnull=False, next_follow_up__lt=now_utc).count()
+                t_fees = float(t_leads.aggregate(Sum('placement_fee'))['placement_fee__sum'] or 0)
+                t_rev = float(t_leads.aggregate(Sum('estimated_revenue'))['estimated_revenue__sum'] or 0)
+
+                t_fin_agg = PreCloserFinancial.objects.filter(lead__in=t_leads).aggregate(
+                    tot_agreed=Sum('agreed_amount'),
+                    tot_paid=Sum('amount_paid')
+                )
+                t_agreed = float(t_fin_agg['tot_agreed'] or Decimal('0.00'))
+                t_paid = float(t_fin_agg['tot_paid'] or Decimal('0.00'))
+                t_balance = round(t_agreed - t_paid, 2)
+
+                team_overview.append({
+                    'id': t.id,
+                    'team_id': t.id,
+                    'name': t.name,
+                    'team_name': t.name,
+                    'manager_name': (t.manager.get_full_name() or t.manager.username) if t.manager else 'Unassigned',
+                    'members_count': t.members.count(),
+                    'total_leads': t_leads.count(),
+                    'assigned_leads': t_leads.filter(assigned_employee__isnull=False).count(),
+                    'unassigned_leads': t_leads.filter(assigned_employee__isnull=True).count(),
+                    'enrolled_leads': t_enrolled,
+                    'lost_leads': t_lost,
+                    'pending_closure_leads': t_pc,
+                    'pending_followups': t_followups,
+                    'overdue_followups': t_overdue,
+                    'placement_fees': t_fees,
+                    'total_placement_fees': t_fees,
+                    'estimated_revenue': t_rev,
+                    'total_estimated_revenue': t_rev,
+                    'total_agreed_amount': t_agreed,
+                    'total_outstanding_balance': t_balance,
+                    'conversion_rate': round((t_enrolled / t_leads.count() * 100), 1) if t_leads.count() > 0 else 0,
+                })
+
+        if role in ['ADMIN', 'MANAGER']:
+            member_qs = User.objects.filter(is_active=True)
+            if role == 'MANAGER':
+                member_qs = member_qs.filter(Q(team_id=team_id) | Q(id=user.id))
+            else:
+                member_qs = member_qs.filter(role=UserRole.SALES_EMPLOYEE)
+
+            for member in member_qs:
+                m_leads = Lead.objects.filter(assigned_employee=member, archived_at__isnull=True)
+                m_enrolled = m_leads.filter(Q(stage__name__icontains='enrolled') | Q(status__iexact='enrolled') | Q(stage__order=10)).count()
+                m_lost = m_leads.filter(Q(stage__name__icontains='lost') | Q(status__iexact='lost') | Q(stage__order=12)).count()
+                m_pc = m_leads.filter(Q(stage__order=9) | Q(stage__name__iexact='Pending Closure')).count()
+                m_followups = m_leads.filter(next_follow_up__isnull=False).count()
+                m_overdue = m_leads.filter(next_follow_up__isnull=False, next_follow_up__lt=now_utc).count()
+                m_rev = float(m_leads.aggregate(Sum('estimated_revenue'))['estimated_revenue__sum'] or 0)
+                m_fees = float(m_leads.aggregate(Sum('placement_fee'))['placement_fee__sum'] or 0)
+
+                calls_count = CommunicationLog.objects.filter(initiated_by=member, channel='CALL').count()
+                emails_count = CommunicationLog.objects.filter(initiated_by=member, channel='EMAIL').count()
+                wa_count = CommunicationLog.objects.filter(initiated_by=member, channel='WHATSAPP').count()
+                messages_count = emails_count + wa_count
+
+                m_fin_agg = PreCloserFinancial.objects.filter(lead__in=m_leads).aggregate(
+                    tot_agreed=Sum('agreed_amount'),
+                    tot_paid=Sum('amount_paid')
+                )
+                m_agreed = float(m_fin_agg['tot_agreed'] or Decimal('0.00'))
+                m_paid = float(m_fin_agg['tot_paid'] or Decimal('0.00'))
+                m_balance = round(m_agreed - m_paid, 2)
+
+                member_performance.append({
+                    'id': member.id,
+                    'name': member.get_full_name() or member.username,
+                    'username': member.username,
+                    'full_name': member.get_full_name() or member.username,
+                    'email': member.email,
+                    'role': member.role,
+                    'team_id': member.team_id,
+                    'team_name': member.team.name if member.team else '',
+                    'assigned_leads': m_leads.count(),
+                    'enrolled_leads': m_enrolled,
+                    'lost_leads': m_lost,
+                    'pending_closure_leads': m_pc,
+                    'pending_followups': m_followups,
+                    'overdue_followups': m_overdue,
+                    'completed_followups': calls_count + messages_count,
+                    'pipeline_value': m_rev,
+                    'placement_fees': m_fees,
+                    'total_placement_fees': m_fees,
+                    'recorded_calls': calls_count,
+                    'recorded_messages': messages_count,
+                    'emails_attempted': emails_count,
+                    'whatsapp_attempted': wa_count,
+                    'total_agreed_amount': m_agreed,
+                    'total_outstanding_balance': m_balance,
+                    'conversion_rate': round((m_enrolled / m_leads.count() * 100), 1) if m_leads.count() > 0 else 0,
+                    'conversion_rate_formula': 'Enrolled Leads / Total Assigned Leads',
+                })
+
+        # 11. Recent Activity Log (combining AuditEvent and CommunicationLog)
         recent_activity = []
         audit_qs = AuditEvent.objects.all()
         if role == 'MANAGER':
@@ -1524,26 +2081,64 @@ class DashboardStatsView(APIView):
                 'timestamp': event.timestamp.isoformat(),
             })
 
-        comm_qs = CommunicationLog.objects.all().select_related('lead', 'initiated_by')
-        if role == 'MANAGER':
-            comm_qs = comm_qs.filter(lead__team_id=team_id)
-        elif role == 'SALES_EMPLOYEE':
-            comm_qs = comm_qs.filter(Q(initiated_by=user) | Q(lead__assigned_employee=user))
-
         for comm in comm_qs[:10]:
             recent_activity.append({
                 'id': f"comm-{comm.id}",
                 'type': f"COMM_{comm.channel}",
                 'title': f"{comm.get_channel_display()} ({comm.status})",
-                'description': f"{comm.get_channel_display()} to {comm.recipient} for {comm.lead.name or comm.lead.lead_id}",
-                'actor': comm.initiated_by.username,
+                'description': f"{comm.get_channel_display()} to {comm.recipient} for {comm.lead.name or comm.lead.lead_id if comm.lead else 'Lead'}",
+                'actor': comm.initiated_by.username if comm.initiated_by else 'System',
                 'timestamp': comm.created_at.isoformat(),
             })
 
         recent_activity.sort(key=lambda x: x['timestamp'], reverse=True)
         recent_activity = recent_activity[:15]
 
-        # 6. Response
+        # 12. Admin System & Integration Health (Admins only, zero secrets exposed)
+        system_health = None
+        if role == 'ADMIN':
+            email_user = getattr(settings, 'EMAIL_HOST_USER', '')
+            email_pass = getattr(settings, 'EMAIL_HOST_PASSWORD', '')
+            email_configured = bool(email_user and email_pass)
+
+            wa_token = getattr(settings, 'WHATSAPP_API_TOKEN', '')
+            wa_phone_id = getattr(settings, 'WHATSAPP_PHONE_NUMBER_ID', '')
+            wa_configured = bool(wa_token and wa_phone_id)
+
+            active_schedules = ReportSchedule.objects.filter(is_active=True).count()
+            latest_run = ReportSchedule.objects.filter(last_run_at__isnull=False).order_by('-last_run_at').first()
+
+            system_health = {
+                'email_smtp': {
+                    'status': 'CONFIGURED' if email_configured else 'UNCONFIGURED',
+                    'host': getattr(settings, 'EMAIL_HOST', 'smtp.gmail.com'),
+                    'port': getattr(settings, 'EMAIL_PORT', 587),
+                    'is_ready': email_configured,
+                    'note': 'Google SMTP delivery provider configured' if email_configured else 'Credentials missing in environment'
+                },
+                'whatsapp': {
+                    'status': 'CONFIGURED' if wa_configured else 'UNCONFIGURED',
+                    'is_ready': wa_configured,
+                    'note': 'Meta Cloud API configured' if wa_configured else 'Token / Phone ID missing in environment'
+                },
+                'callyzer': {
+                    'status': 'BLOCKED_PENDING_SPECS',
+                    'is_ready': False,
+                    'note': 'Outbound calling API specification pending verification'
+                },
+                'reports_scheduler': {
+                    'active_schedules_count': active_schedules,
+                    'last_run_at': latest_run.last_run_at.isoformat() if latest_run and latest_run.last_run_at else None,
+                    'status': 'OPERATIONAL'
+                },
+                'data_integrity': {
+                    'pending_closure_missing_financials': missing_financial_count,
+                    'unassigned_leads': unassigned_count,
+                    'inactive_user_assignments': inactive_user_leads_count,
+                }
+            }
+
+        # 13. Unified API Response
         return Response({
             'role': role,
             'user': {
@@ -1555,13 +2150,29 @@ class DashboardStatsView(APIView):
                 'team_id': team_id,
                 'team_name': getattr(user, 'managed_team_name', None) or (user.team.name if user.team else None),
             },
-            'current_date': now.strftime('%A, %B %d, %Y'),
+            'filters': {
+                'preset': applied_preset,
+                'start_date': start_date_str,
+                'end_date': end_date_str,
+                'team_id': team_id_param if (role == 'ADMIN' and 'team_id_param' in locals()) else team_id,
+                'employee_id': emp_id_param if 'emp_id_param' in locals() else (user.id if role == 'SALES_EMPLOYEE' else None),
+                'stage_id': stage_id_param,
+                'source': source_param,
+                'channel': comm_channel_param,
+                'search': search_param or '',
+            },
+            'current_date': now_local.strftime('%A, %B %d, %Y'),
             'kpis': kpis,
+            'pending_closure_financials': pending_closure_financials,
             'pipeline_overview': pipeline_overview,
+            'communications_activity': communications_activity,
+            'followup_queue': followup_queue,
+            'attention_required': attention_required,
             'team_overview': team_overview,
             'member_performance': member_performance,
             'followup_list': followup_list,
             'followup_monitoring': followup_list,
             'recent_activity': recent_activity,
+            'system_health': system_health,
         })
 

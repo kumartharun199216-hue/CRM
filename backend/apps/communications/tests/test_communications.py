@@ -1,4 +1,5 @@
 import pytest
+from django.test import override_settings
 from rest_framework.test import APIClient
 from rest_framework import status
 from apps.authentication.models import User, UserRole
@@ -65,6 +66,7 @@ class TestCommunications:
         })
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    @override_settings(EMAIL_HOST_USER='', EMAIL_HOST_PASSWORD='')
     def test_send_email_blocked_without_smtp_credentials(self):
         # Strict rule: Do not simulate successful external calls, messages, emails.
         # When SMTP credentials are not set, it must return a blocker status (503).

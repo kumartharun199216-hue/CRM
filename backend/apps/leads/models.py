@@ -320,3 +320,95 @@ class LeadImportBatch(models.Model):
 
     def __str__(self):
         return f"Import Batch {self.batch_id} ({self.file_name}) by {self.imported_by.username} - {self.imported_rows} leads"
+
+
+class PreCloserFinancial(models.Model):
+    """
+    Dedicated financial data record specifically for leads in the Pre-Closer stage.
+    Maintains total agreed deal amount and amount paid with strict decimal precision.
+    """
+    lead = models.OneToOneField(
+        Lead,
+        on_delete=models.CASCADE,
+        related_name='pre_closer_financial'
+    )
+    agreed_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text="Total agreed course/deal amount in INR"
+    )
+    amount_paid = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text="Initial or total amount paid in INR"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_financial_records'
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='updated_financial_records'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    @property
+    def outstanding_balance(self):
+        return self.agreed_amount - self.amount_paid
+
+    def clean(self):
+        from decimal import Decimal
+        super().clean()
+        if self.agreed_amount is not None and self.agreed_amount < Decimal('0.00'):
+            raise ValidationError({'agreed_amount': "Total agreed amount cannot be negative."})
+        if self.amount_paid is not None and self.amount_paid < Decimal('0.00'):
+            raise ValidationError({'amount_paid': "Amount paid cannot be negative."})
+        if self.agreed_amount is not None and self.amount_paid is not None:
+            if self.amount_paid > self.agreed_amount:
+                raise ValidationError({'amount_paid': "Amount paid cannot exceed the total agreed amount."})
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Lead {self.lead.lead_id} Financial: Agreed {self.agreed_amount}, Paid {self.amount_paid}, Balance {self.outstanding_balance}"
+
+
+class LeadFinancialHistory(models.Model):
+    """
+    Audit history tracking changes made to lead financial records over time.
+    """
+    lead = models.ForeignKey(
+        Lead,
+        on_delete=models.CASCADE,
+        related_name='financial_history'
+    )
+    financial_record = models.ForeignKey(
+        PreCloserFinancial,
+        on_delete=models.CASCADE,
+        related_name='history'
+    )
+    agreed_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount_paid = models.DecimalField(max_digits=12, decimal_places=2)
+    outstanding_balance = models.DecimalField(max_digits=12, decimal_places=2)
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='+'
+    )
+    note = models.TextField(blank=True, default='')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"Lead {self.lead.lead_id} Financial History at {self.timestamp}: Agreed {self.agreed_amount}, Paid {self.amount_paid} by {self.changed_by.username}"
+

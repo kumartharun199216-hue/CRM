@@ -16,6 +16,9 @@ import {
   Users,
   UserCircle,
   Building,
+  Mail,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -34,6 +37,10 @@ interface SidebarProps {
   onOpenTemplates?: () => void;
   onOpenStages: () => void;
   onLogout: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 const DEFAULT_12_STAGES: PipelineStage[] = [
@@ -45,7 +52,7 @@ const DEFAULT_12_STAGES: PipelineStage[] = [
   { id: 6, name: 'Prospect', order: 6, is_active: true },
   { id: 7, name: 'FollowUp', order: 7, is_active: true },
   { id: 8, name: 'Negotation', order: 8, is_active: true },
-  { id: 9, name: 'pendingClosure', order: 9, is_active: true },
+  { id: 9, name: 'Pending Closure', order: 9, is_active: true },
   { id: 10, name: 'Enrolled', order: 10, is_active: true },
   { id: 11, name: 'Not Interested', order: 11, is_active: true },
   { id: 12, name: 'Lost', order: 12, is_active: true },
@@ -65,9 +72,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenReports,
   onOpenStages,
   onLogout,
+  isCollapsed: controlledCollapsed,
+  onToggleCollapse,
+  isMobileOpen = false,
+  onCloseMobile,
 }) => {
   const isPipelineActive = activeView === 'spreadsheet' || activeView === 'kanban';
   const [isPipelineExpanded, setIsPipelineExpanded] = useState(Boolean(selectedStageId));
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+
+  const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
+  const toggleCollapse = onToggleCollapse || (() => setInternalCollapsed((prev) => !prev));
 
   // Automatically expand the pipeline submenu whenever a specific stage subroute is active
   useEffect(() => {
@@ -81,6 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const canViewUnassigned = isAdmin || isManager;
   const canImport = isAdmin || isManager;
   const canViewUsers = isAdmin || isManager;
+  const canManageTemplates = isAdmin || isManager;
 
   const activeStages = stages && stages.length > 0
     ? [...stages].filter((s) => s.is_active).sort((a, b) => a.order - b.order)
@@ -91,19 +107,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'ADMIN':
         return (
           <span className="crm-pill crm-pill-purple">
-            <Shield className="w-3 h-3 text-[#7C3AED]" /> Admin
+            <Shield className="w-3 h-3 text-[#7C3AED] dark:text-[#D8B4FE]" /> Admin
           </span>
         );
       case 'MANAGER':
         return (
           <span className="crm-pill crm-pill-blue">
-            <Briefcase className="w-3 h-3 text-[#2563EB]" /> Manager
+            <Briefcase className="w-3 h-3 text-[#2563EB] dark:text-[#60A5FA]" /> Manager
           </span>
         );
       case 'SALES_EMPLOYEE':
         return (
-          <span className="crm-pill bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
-            <GraduationCap className="w-3 h-3 text-[#2563EB]" /> Counsellor
+          <span className="crm-pill bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] dark:bg-[#172554] dark:text-[#60A5FA] dark:border-[#1E40AF]">
+            <GraduationCap className="w-3 h-3 text-[#2563EB] dark:text-[#60A5FA]" /> Counsellor
           </span>
         );
     }
@@ -123,311 +139,432 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-[#E2E8F0] flex flex-col justify-between shrink-0 select-none min-h-screen sticky top-0 h-screen font-sans">
-      {/* Top Branding */}
-      <div className="overflow-y-auto">
-        <div className="p-4 border-b border-[#E2E8F0] flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#1E3A8A] flex items-center justify-center text-white shadow-sm shrink-0">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-base font-extrabold tracking-tight leading-tight m-0 truncate text-[#1E3A8A]">
-              Skill Move
-            </h1>
-            <p className="text-[11px] font-medium text-[#64748B] m-0 truncate tracking-wide">
-              Admissions & Sales CRM
-            </p>
-          </div>
-        </div>
+    <>
+      {/* Mobile Backdrop */}
+      {isMobileOpen && (
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Close navigation overlay"
+          onClick={onCloseMobile}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onCloseMobile?.();
+          }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 md:hidden transition-opacity cursor-pointer"
+        />
+      )}
 
-        {/* Navigation Menu */}
-        <div className="p-3 space-y-5">
-          {/* Views Section */}
-          <div className="space-y-1">
-            <div className="px-3 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
-              Views
-            </div>
-            <button
-              type="button"
-              id="sidebar-dashboard-nav-item"
-              onClick={() => {
-                onViewChange('dashboard');
-              }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                activeView === 'dashboard'
-                  ? 'bg-[#2563EB] text-white shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-              }`}
-            >
-              <LayoutDashboard className="w-4 h-4 shrink-0" />
-              <span>
-                {user.role === 'ADMIN' ? 'Admin Dashboard' : user.role === 'MANAGER' ? 'Manager Dashboard' : 'My Dashboard'}
-              </span>
-            </button>
-
-            {canViewUnassigned && (
-              <button
-                type="button"
-                id="unassigned-leads-nav-item"
-                onClick={() => {
-                  onViewChange('unassigned');
-                }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeView === 'unassigned'
-                    ? 'bg-[#2563EB] text-white shadow-xs'
-                    : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <UserX className={`w-4 h-4 shrink-0 ${activeView === 'unassigned' ? 'text-white' : 'text-[#D97706]'}`} />
-                  <span className="truncate">Unassigned Leads</span>
-                </div>
-                <span
-                  id="unassigned-count-badge"
-                  className={`px-1.5 py-0.5 rounded-full font-mono text-[10px] shrink-0 transition-all ${
-                    activeView === 'unassigned'
-                      ? 'bg-white/20 text-white font-bold'
-                      : (unassignedCount ?? 0) > 0
-                      ? 'crm-pill-warning font-bold'
-                      : 'bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0]'
-                  }`}
-                >
-                  {unassignedCountLoading ? '…' : (unassignedCount ?? 0)}
-                </span>
-              </button>
-            )}
-
-            {canImport && (
-              <button
-                type="button"
-                id="sidebar-import-nav-item"
-                onClick={() => {
-                  onViewChange('import');
-                }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeView === 'import'
-                    ? 'bg-[#2563EB] text-white shadow-xs'
-                    : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-                }`}
-              >
-                <FileSpreadsheet className={`w-4 h-4 shrink-0 ${activeView === 'import' ? 'text-white' : 'text-[#2563EB]'}`} />
-                <span className="truncate">Import Leads</span>
-              </button>
-            )}
-
-            {/* Users */}
-            {canViewUsers && (
-              <button
-                type="button"
-                id="sidebar-users-nav-item"
-                onClick={() => {
-                  onViewChange('users');
-                }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeView === 'users'
-                    ? 'bg-[#2563EB] text-white shadow-xs'
-                    : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-                }`}
-              >
-                <Users className={`w-4 h-4 shrink-0 ${activeView === 'users' ? 'text-white' : 'text-[#2563EB]'}`} />
-                <span className="truncate">Users</span>
-              </button>
-            )}
-
-            {/* Teams (Admin Only) */}
-            {isAdmin && (
-              <button
-                type="button"
-                id="sidebar-teams-nav-item"
-                onClick={() => {
-                  onViewChange('teams');
-                }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeView === 'teams'
-                    ? 'bg-[#2563EB] text-white shadow-xs'
-                    : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-                }`}
-              >
-                <Building className={`w-4 h-4 shrink-0 ${activeView === 'teams' ? 'text-white' : 'text-[#7C3AED]'}`} />
-                <span className="truncate">Teams</span>
-              </button>
-            )}
-
-            {/* My Profile */}
-            <button
-              type="button"
-              id="sidebar-profile-nav-item"
-              onClick={() => {
-                onViewChange('profile');
-              }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                activeView === 'profile'
-                  ? 'bg-[#2563EB] text-white shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-              }`}
-            >
-              <UserCircle className={`w-4 h-4 shrink-0 ${activeView === 'profile' ? 'text-white' : 'text-[#2563EB]'}`} />
-              <span className="truncate">My Profile</span>
-            </button>
-          </div>
-
-          {/* Pipeline Stages Section with Expand/Collapse and Live Lead Counts */}
-          <div className="space-y-1">
-            <div className="px-3 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
-              Pipeline
-            </div>
-            <button
-              type="button"
-              id="pipeline-stages-trigger"
-              onClick={handleTogglePipeline}
-              onKeyDown={handleKeyDownPipeline}
-              aria-expanded={isPipelineExpanded}
-              aria-controls="pipeline-stages-submenu"
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                isPipelineActive
-                  ? 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]'
-                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-              }`}
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Layers className="w-4 h-4 text-[#2563EB] shrink-0" />
-                <span className="truncate">Pipeline Stages ({activeStages.length})</span>
+      {/* Main Sidebar Shell */}
+      <aside
+        className={`fixed md:sticky top-0 h-screen z-50 md:z-20 bg-white dark:bg-[#0B1120] border-r border-[#E2E8F0] dark:border-[#334155] flex flex-col justify-between shrink-0 select-none font-sans transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'
+          } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+          }`}
+      >
+        {/* Top Branding & Collapse Button */}
+        <div className="overflow-y-auto flex-1">
+          <div className="p-4 border-b border-[#E2E8F0] dark:border-[#334155] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#1D4ED8] flex items-center justify-center text-white shadow-sm shrink-0">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-[#64748B] transition-transform duration-200 shrink-0 ${
-                  isPipelineExpanded ? 'rotate-180 text-[#2563EB]' : ''
-                }`}
-              />
-            </button>
+              {!isCollapsed && (
+                <div className="min-w-0 animate-in fade-in duration-200">
+                  <h1 className="text-base font-extrabold tracking-tight leading-tight m-0 truncate text-[#0F172A] dark:text-[#F8FAFC]">
+                    Skill Move
+                  </h1>
+                  <p className="text-[11px] font-medium text-[#64748B] dark:text-[#94A3B8] m-0 truncate tracking-wide">
+                    Sales CRM
+                  </p>
+                </div>
+              )}
+            </div>
 
-            {/* Submenu with smooth CSS animation */}
-            <div
-              id="pipeline-stages-submenu"
-              role="region"
-              aria-labelledby="pipeline-stages-trigger"
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isPipelineExpanded ? 'max-h-[600px] opacity-100 mt-1' : 'max-h-0 opacity-0 pointer-events-none'
-              }`}
+            {/* Collapse / Expand Toggle Button (Desktop) */}
+            <button
+              type="button"
+              id="sidebar-collapse-toggle-btn"
+              onClick={toggleCollapse}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="hidden md:flex w-7 h-7 rounded-lg items-center justify-center text-[#64748B] hover:text-[#0F172A] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors cursor-pointer"
             >
-              <div className="pl-3 pr-1 py-1 space-y-0.5 border-l border-[#E2E8F0] ml-4">
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {/* Navigation Menu */}
+          <div className="p-3 space-y-5">
+            {/* Main Views Section */}
+            <div className="space-y-1">
+              {!isCollapsed && (
+                <div className="px-3 text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
+                  Views
+                </div>
+              )}
+
+              {/* Dashboard */}
+              <button
+                type="button"
+                id="sidebar-dashboard-nav-item"
+                onClick={() => {
+                  onViewChange('dashboard');
+                  onCloseMobile?.();
+                }}
+                title={isCollapsed ? 'Dashboard' : undefined}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-3'
+                  } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeView === 'dashboard'
+                    ? 'bg-[#2563EB] text-white shadow-xs'
+                    : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+              >
+                <LayoutDashboard className="w-4 h-4 shrink-0" />
+                {!isCollapsed && (
+                  <span className="truncate">
+                    {user.role === 'ADMIN' ? 'Admin Dashboard' : user.role === 'MANAGER' ? 'Manager Dashboard' : 'My Dashboard'}
+                  </span>
+                )}
+              </button>
+
+              {/* Unassigned Leads */}
+              {canViewUnassigned && (
                 <button
                   type="button"
-                  id="pipeline-all-stages-btn"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onSelectStage?.(null);
+                  id="unassigned-leads-nav-item"
+                  onClick={() => {
+                    onViewChange('unassigned');
+                    onCloseMobile?.();
                   }}
-                  className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[11px] transition text-left group cursor-pointer ${
-                    isPipelineActive && selectedStageId === null
-                      ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold border border-[#BFDBFE]'
-                      : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-                  }`}
+                  title={isCollapsed ? 'Unassigned Leads' : undefined}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2 relative' : 'justify-between px-3'
+                    } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeView === 'unassigned'
+                      ? 'bg-[#2563EB] text-white shadow-xs'
+                      : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
                 >
-                  <span className="truncate mr-2 font-medium">All Pipeline Stages</span>
-                  <span className="px-1.5 py-0.2 rounded-md font-mono text-[10px] bg-[#F1F5F9] text-[#0F172A] border border-[#E2E8F0] shrink-0">
-                    {countsLoading ? '…' : Object.values(stageCounts).reduce((a, b) => a + b, 0)}
-                  </span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <UserX className={`w-4 h-4 shrink-0 ${activeView === 'unassigned' ? 'text-white' : 'text-[#D97706]'}`} />
+                    {!isCollapsed && <span className="truncate">Unassigned Leads</span>}
+                  </div>
+                  {!isCollapsed ? (
+                    <span
+                      id="unassigned-count-badge"
+                      className={`px-1.5 py-0.5 rounded-full font-mono text-[10px] shrink-0 transition-all ${activeView === 'unassigned'
+                          ? 'bg-white/20 text-white font-bold'
+                          : (unassignedCount ?? 0) > 0
+                            ? 'crm-pill-warning font-bold'
+                            : 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#334155]'
+                        }`}
+                    >
+                      {unassignedCountLoading ? '…' : (unassignedCount ?? 0)}
+                    </span>
+                  ) : (unassignedCount ?? 0) > 0 ? (
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#D97706]" />
+                  ) : null}
                 </button>
+              )}
 
-                {activeStages.map((st) => {
-                  const count = stageCounts[st.id] ?? 0;
-                  const isSelected = isPipelineActive && selectedStageId === st.id;
+              {/* Bulk Import Leads */}
+              {canImport && (
+                <button
+                  type="button"
+                  id="sidebar-import-nav-item"
+                  onClick={() => {
+                    onViewChange('import');
+                    onCloseMobile?.();
+                  }}
+                  title={isCollapsed ? 'Import Leads' : undefined}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-3'
+                    } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeView === 'import'
+                      ? 'bg-[#2563EB] text-white shadow-xs'
+                      : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                >
+                  <FileSpreadsheet className={`w-4 h-4 shrink-0 ${activeView === 'import' ? 'text-white' : 'text-[#2563EB]'}`} />
+                  {!isCollapsed && <span className="truncate">Import Leads</span>}
+                </button>
+              )}
 
-                  return (
+              {/* Users */}
+              {canViewUsers && (
+                <button
+                  type="button"
+                  id="sidebar-users-nav-item"
+                  onClick={() => {
+                    onViewChange('users');
+                    onCloseMobile?.();
+                  }}
+                  title={isCollapsed ? 'Users' : undefined}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-3'
+                    } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeView === 'users'
+                      ? 'bg-[#2563EB] text-white shadow-xs'
+                      : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                >
+                  <Users className={`w-4 h-4 shrink-0 ${activeView === 'users' ? 'text-white' : 'text-[#2563EB]'}`} />
+                  {!isCollapsed && <span className="truncate">Users</span>}
+                </button>
+              )}
+
+              {/* Teams (Admin Only) */}
+              {isAdmin && (
+                <button
+                  type="button"
+                  id="sidebar-teams-nav-item"
+                  onClick={() => {
+                    onViewChange('teams');
+                    onCloseMobile?.();
+                  }}
+                  title={isCollapsed ? 'Teams' : undefined}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-3'
+                    } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeView === 'teams'
+                      ? 'bg-[#2563EB] text-white shadow-xs'
+                      : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                >
+                  <Building className={`w-4 h-4 shrink-0 ${activeView === 'teams' ? 'text-white' : 'text-[#7C3AED]'}`} />
+                  {!isCollapsed && <span className="truncate">Teams</span>}
+                </button>
+              )}
+
+              {/* Email Templates */}
+              {canManageTemplates && (
+                <button
+                  type="button"
+                  id="sidebar-templates-nav-item"
+                  onClick={() => {
+                    onViewChange('templates');
+                    onCloseMobile?.();
+                  }}
+                  title={isCollapsed ? 'Email Templates' : undefined}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-3'
+                    } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeView === 'templates'
+                      ? 'bg-[#2563EB] text-white shadow-xs'
+                      : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                    }`}
+                >
+                  <Mail className={`w-4 h-4 shrink-0 ${activeView === 'templates' ? 'text-white' : 'text-[#2563EB]'}`} />
+                  {!isCollapsed && <span className="truncate">Email Templates</span>}
+                </button>
+              )}
+
+              {/* My Profile */}
+              <button
+                type="button"
+                id="sidebar-profile-nav-item"
+                onClick={() => {
+                  onViewChange('profile');
+                  onCloseMobile?.();
+                }}
+                title={isCollapsed ? 'My Profile' : undefined}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-3'
+                  } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeView === 'profile'
+                    ? 'bg-[#2563EB] text-white shadow-xs'
+                    : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+              >
+                <UserCircle className={`w-4 h-4 shrink-0 ${activeView === 'profile' ? 'text-white' : 'text-[#2563EB]'}`} />
+                {!isCollapsed && <span className="truncate">My Profile</span>}
+              </button>
+            </div>
+
+            {/* Pipeline Stages Section */}
+            <div className="space-y-1">
+              {!isCollapsed && (
+                <div className="px-3 text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
+                  Pipeline
+                </div>
+              )}
+              <button
+                type="button"
+                id="pipeline-stages-trigger"
+                onClick={handleTogglePipeline}
+                onKeyDown={handleKeyDownPipeline}
+                aria-expanded={isPipelineExpanded}
+                aria-controls="pipeline-stages-submenu"
+                title={isCollapsed ? `Pipeline Stages (${activeStages.length})` : undefined}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'justify-between px-3'
+                  } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${isPipelineActive
+                    ? 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] dark:bg-[#172554] dark:text-[#60A5FA] dark:border-[#1E40AF]'
+                    : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Layers className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA] shrink-0" />
+                  {!isCollapsed && <span className="truncate">Pipeline Stages ({activeStages.length})</span>}
+                </div>
+                {!isCollapsed && (
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8] transition-transform duration-200 shrink-0 ${isPipelineExpanded ? 'rotate-180 text-[#2563EB] dark:text-[#60A5FA]' : ''
+                      }`}
+                  />
+                )}
+              </button>
+
+              {/* Submenu with Smooth Transition */}
+              {!isCollapsed && (
+                <div
+                  id="pipeline-stages-submenu"
+                  role="region"
+                  aria-labelledby="pipeline-stages-trigger"
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${isPipelineExpanded ? 'max-h-[600px] opacity-100 mt-1' : 'max-h-0 opacity-0 pointer-events-none'
+                    }`}
+                >
+                  <div className="pl-3 pr-1 py-1 space-y-0.5 border-l border-[#E2E8F0] dark:border-[#334155] ml-4">
                     <button
-                      key={st.id}
                       type="button"
-                      id={`pipeline-stage-btn-${st.id}`}
+                      id="pipeline-all-stages-btn"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        onSelectStage?.(st.id);
+                        onSelectStage?.(null);
+                        onCloseMobile?.();
                       }}
-                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[11px] transition text-left group cursor-pointer ${
-                        isSelected
-                          ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold border border-[#BFDBFE]'
-                          : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
-                      }`}
+                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[11px] transition text-left group cursor-pointer ${isPipelineActive && selectedStageId === null
+                          ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold border border-[#BFDBFE] dark:bg-[#172554] dark:text-[#60A5FA] dark:border-[#1E40AF]'
+                          : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                        }`}
                     >
-                      <span className="truncate mr-2">{st.name}</span>
-                      <span className="px-1.5 py-0.2 rounded-md font-mono text-[10px] bg-[#F1F5F9] text-[#0F172A] border border-[#E2E8F0] shrink-0">
-                        {countsLoading ? '…' : count}
+                      <span className="truncate mr-2 font-medium">All Pipeline Stages</span>
+                      <span className="px-1.5 py-0.2 rounded-md font-mono text-[10px] bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#334155] shrink-0">
+                        {countsLoading ? '…' : Object.values(stageCounts).reduce((a, b) => a + b, 0)}
                       </span>
                     </button>
-                  );
-                })}
+
+                    {activeStages.map((st) => {
+                      const count = stageCounts[st.id] ?? 0;
+                      const isSelected = isPipelineActive && selectedStageId === st.id;
+
+                      return (
+                        <button
+                          key={st.id}
+                          type="button"
+                          id={`pipeline-stage-btn-${st.id}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onSelectStage?.(st.id);
+                            onCloseMobile?.();
+                          }}
+                          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[11px] transition text-left group cursor-pointer ${isSelected
+                              ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold border border-[#BFDBFE] dark:bg-[#172554] dark:text-[#60A5FA] dark:border-[#1E40AF]'
+                              : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                            }`}
+                        >
+                          <span className="truncate mr-2">{st.name}</span>
+                          <span className="px-1.5 py-0.2 rounded-md font-mono text-[10px] bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] border border-[#E2E8F0] dark:border-[#334155] shrink-0">
+                            {countsLoading ? '…' : count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Admin Tools Section */}
+            {isAdmin && !isCollapsed && (
+              <div className="space-y-1">
+                <div className="px-3 text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
+                  Administration
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenReports();
+                    onCloseMobile?.();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition cursor-pointer"
+                >
+                  <Clock className="w-4 h-4 text-[#7C3AED] dark:text-[#D8B4FE] shrink-0" />
+                  <span>Scheduled Reports</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenStages();
+                    onCloseMobile?.();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition cursor-pointer"
+                >
+                  <Settings2 className="w-4 h-4 text-[#64748B] dark:text-[#94A3B8] shrink-0" />
+                  <span>Configure Stages</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Profile and Sign Out Card */}
+        <div className="p-3 border-t border-[#E2E8F0] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#111827] shrink-0">
+          {!isCollapsed ? (
+            <div
+              id="sidebar-user-profile-card"
+              onClick={() => {
+                onViewChange('profile');
+                onCloseMobile?.();
+              }}
+              title="Click to view My Profile"
+              className={`p-3 bg-white dark:bg-[#172033] rounded-lg space-y-2.5 border transition cursor-pointer hover:border-[#2563EB]/40 dark:hover:border-[#60A5FA]/40 hover:shadow-xs group ${activeView === 'profile'
+                  ? 'border-[#2563EB] ring-2 ring-[#2563EB]/20 bg-[#EFF6FF]/20 dark:border-[#60A5FA] dark:bg-[#172554]/30'
+                  : 'border-[#E2E8F0] dark:border-[#334155]'
+                }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] group-hover:text-[#2563EB] dark:group-hover:text-[#60A5FA] transition-colors truncate">
+                    {user.full_name || user.email || user.username}
+                  </div>
+                  <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] truncate flex items-center gap-1.5 mt-0.5">
+                    <span className="font-mono text-[#475569] dark:text-[#CBD5E1]">
+                      {user.employee_id || `EMP-${String(user.id).padStart(4, '0')}`}
+                    </span>
+                    {user.team_name && <span>• {user.team_name}</span>}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  id="sidebar-logout-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLogout();
+                  }}
+                  className="p-1.5 text-[#64748B] dark:text-[#94A3B8] hover:text-[#DC2626] dark:hover:text-[#EF4444] hover:bg-[#FEF2F2] dark:hover:bg-[#7F1D1D]/30 rounded-md transition shrink-0 cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-[#E2E8F0] dark:border-[#273449]">
+                {getRoleBadge()}
+                <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-mono">v1.2</span>
               </div>
             </div>
-          </div>
-
-          {/* Admin Management Section */}
-          {isAdmin && (
-            <div className="space-y-1">
-              <div className="px-3 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
-                Administration
-              </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
               <button
                 type="button"
-                onClick={onOpenReports}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition cursor-pointer"
+                id="sidebar-user-profile-card"
+                onClick={() => onViewChange('profile')}
+                title={user.full_name || user.username}
+                className="w-10 h-10 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#7C3AED] text-white flex items-center justify-center font-bold text-xs shadow-xs cursor-pointer"
               >
-                <Clock className="w-4 h-4 text-[#7C3AED] shrink-0" />
-                <span>Scheduled Reports</span>
+                {(user.full_name || user.username).slice(0, 2).toUpperCase()}
               </button>
               <button
                 type="button"
-                onClick={onOpenStages}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition cursor-pointer"
+                id="sidebar-logout-btn"
+                onClick={onLogout}
+                className="p-2 text-[#64748B] dark:text-[#94A3B8] hover:text-[#DC2626] hover:bg-[#FEF2F2] dark:hover:bg-[#7F1D1D]/30 rounded-md transition cursor-pointer"
+                title="Sign Out"
               >
-                <Settings2 className="w-4 h-4 text-[#64748B] shrink-0" />
-                <span>Configure Stages</span>
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           )}
         </div>
-      </div>
-
-      {/* Bottom Profile and Sign Out Card */}
-      <div className="p-3 border-t border-[#E2E8F0] bg-[#F8FAFC] shrink-0">
-        <div
-          id="sidebar-user-profile-card"
-          onClick={() => onViewChange('profile')}
-          title="Click to view My Profile"
-          className={`p-3 bg-white rounded-lg space-y-2.5 border transition cursor-pointer hover:border-[#2563EB]/40 hover:shadow-xs group ${
-            activeView === 'profile' ? 'border-[#2563EB] ring-2 ring-[#2563EB]/20 bg-[#EFF6FF]/20' : 'border-[#E2E8F0]'
-          }`}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-[#0F172A] group-hover:text-[#2563EB] transition-colors truncate">
-                {user.full_name || user.email || user.username}
-              </div>
-              <div className="text-[10px] text-[#64748B] truncate flex items-center gap-1.5 mt-0.5">
-                <span className="font-mono text-[#475569]">{user.employee_id || `EMP-${String(user.id).padStart(4, '0')}`}</span>
-                {user.team_name && <span>• {user.team_name}</span>}
-              </div>
-            </div>
-            <button
-              type="button"
-              id="sidebar-logout-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                onLogout();
-              }}
-              className="p-1.5 text-[#64748B] hover:text-[#DC2626] hover:bg-[#FEF2F2] rounded-md transition shrink-0 cursor-pointer"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between pt-1 border-t border-[#E2E8F0]">
-            {getRoleBadge()}
-            <span className="text-[10px] text-[#64748B] font-mono">v1.2</span>
-          </div>
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };

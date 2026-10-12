@@ -20,11 +20,12 @@ EXPECTED_STAGES = [
     (6, "Prospect"),
     (7, "FollowUp"),
     (8, "Negotation"),
-    (9, "pendingClosure"),
+    (9, "Pending Closure"),
     (10, "Enrolled"),
     (11, "Not Interested"),
     (12, "Lost"),
 ]
+
 
 @pytest.mark.django_db(transaction=True)
 class TestBulkLeadImportAndPagination:

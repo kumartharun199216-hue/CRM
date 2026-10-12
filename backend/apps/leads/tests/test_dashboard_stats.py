@@ -6,7 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from apps.authentication.models import User, UserRole
 from apps.teams.models import Team
-from apps.leads.models import PipelineStage, Lead
+from apps.leads.models import PipelineStage, Lead, PreCloserFinancial
 from apps.communications.models import CommunicationLog, CommunicationChannel, CommunicationStatus
 
 @pytest.fixture
@@ -236,3 +236,154 @@ class TestDashboardStats:
         # Followup list contains only Counsellor A1's leads
         for f in data['followup_list']:
             assert f['assigned_employee_name'] == 'counsellor_a1@skillmove.com'
+
+    def test_invalid_date_range_validation(self, client, setup_dashboard_data):
+        admin = setup_dashboard_data['admin']
+        client.force_authenticate(user=admin)
+        url = reverse('dashboard-stats')
+
+        # Start date after end date should return 400 Bad Request
+        res = client.get(f"{url}?start_date=2026-10-20&end_date=2026-10-10")
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Start date cannot be after end date" in res.data['error']
+
+    def test_pending_closure_financials_and_missing_records(self, client, setup_dashboard_data):
+        admin = setup_dashboard_data['admin']
+        team_a = setup_dashboard_data['team_a']
+        client.force_authenticate(user=admin)
+
+        s_pc, _ = PipelineStage.objects.get_or_create(
+            name="Pending Closure",
+            defaults={"order": 9, "is_active": True}
+        )
+
+        # Create PC lead 1 with verified financial record
+        lead_pc1 = Lead.objects.create(
+            name="PC Student 1",
+            email="pc1@test.com",
+            stage=s_pc,
+            status="Active",
+            team=team_a,
+            assigned_employee=setup_dashboard_data['counsellor_a1'],
+            created_by=admin
+        )
+        PreCloserFinancial.objects.create(
+            lead=lead_pc1,
+            agreed_amount=50000.00,
+            amount_paid=20000.00,
+            created_by=admin,
+            updated_by=admin
+        )
+
+        # Create PC lead 2 WITHOUT financial record (to trigger missing financial integrity alert)
+        lead_pc2 = Lead.objects.create(
+            name="PC Student 2 Missing Fin",
+            email="pc2@test.com",
+            stage=s_pc,
+            status="Active",
+            team=team_a,
+            assigned_employee=setup_dashboard_data['counsellor_a1'],
+            created_by=admin
+        )
+
+        url = reverse('dashboard-stats')
+        res = client.get(url)
+        assert res.status_code == status.HTTP_200_OK
+
+        fin = res.data['pending_closure_financials']
+        assert fin['leads_count'] >= 2
+        assert fin['total_agreed_amount'] >= 50000.00
+        assert fin['total_amount_paid'] >= 20000.00
+        assert fin['total_outstanding_balance'] >= 30000.00
+        assert fin['missing_financial_count'] >= 1
+
+        # Check table contents
+        table = fin['outstanding_leads_table']
+        missing_rows = [r for r in table if r['lead_id'] == lead_pc2.id]
+        assert len(missing_rows) == 1
+        assert missing_rows[0]['is_missing_financial'] is True
+
+    def test_admin_filter_by_team_and_employee(self, client, setup_dashboard_data):
+        admin = setup_dashboard_data['admin']
+        team_a = setup_dashboard_data['team_a']
+        counsellor_a1 = setup_dashboard_data['counsellor_a1']
+        client.force_authenticate(user=admin)
+
+        url = reverse('dashboard-stats')
+        # Filter by Team A
+        res_team = client.get(f"{url}?team_id={team_a.id}")
+        assert res_team.status_code == status.HTTP_200_OK
+        # Team A leads
+        assert res_team.data['kpis']['total_leads'] == 3
+
+        # Filter by Counsellor A1
+        res_emp = client.get(f"{url}?employee_id={counsellor_a1.id}")
+        assert res_emp.status_code == status.HTTP_200_OK
+        assert res_emp.data['kpis']['total_leads'] == 2
+
+    def test_manager_cannot_bypass_team_isolation(self, client, setup_dashboard_data):
+        manager_a = setup_dashboard_data['manager_a']
+        team_b = setup_dashboard_data['team_b']
+        client.force_authenticate(user=manager_a)
+
+        url = reverse('dashboard-stats')
+        # Manager A attempts to request Team B's data
+        res = client.get(f"{url}?team_id={team_b.id}")
+        assert res.status_code == status.HTTP_200_OK
+        # Must still return Team A's leads (3), never Team B
+        assert res.data['kpis']['total_leads'] == 3
+
+    def test_communications_breakdown_and_metadata(self, client, setup_dashboard_data):
+        admin = setup_dashboard_data['admin']
+        l1 = setup_dashboard_data['leads'][0]
+        client.force_authenticate(user=admin)
+
+        # Create additional logs: Email success and WhatsApp failed
+        CommunicationLog.objects.create(
+            lead=l1,
+            channel=CommunicationChannel.EMAIL,
+            recipient="s1@test.com",
+            status=CommunicationStatus.SUCCESS,
+            initiated_by=admin
+        )
+        CommunicationLog.objects.create(
+            lead=l1,
+            channel=CommunicationChannel.WHATSAPP,
+            recipient="+1234567890",
+            status=CommunicationStatus.FAILED,
+            error_message="Recipient phone invalid",
+            initiated_by=admin
+        )
+
+        url = reverse('dashboard-stats')
+        res = client.get(url)
+        assert res.status_code == status.HTTP_200_OK
+
+        comms = res.data['communications_activity']
+        assert comms['calls']['attempts'] >= 1
+        assert comms['email']['accepted'] >= 1
+        assert comms['whatsapp']['failed'] >= 1
+        # Verify provider honesty metadata
+        assert "SMTP gateway accepted" in comms['metadata']['email_note']
+        assert "Meta Cloud API" in comms['metadata']['whatsapp_note']
+
+    def test_attention_required_and_system_health(self, client, setup_dashboard_data):
+        admin = setup_dashboard_data['admin']
+        client.force_authenticate(user=admin)
+
+        url = reverse('dashboard-stats')
+        res = client.get(url)
+        assert res.status_code == status.HTTP_200_OK
+
+        attention = res.data['attention_required']
+        assert attention['overdue_followups'] >= 1
+        assert attention['unassigned_leads'] >= 2
+
+        # Admin system health must exist and must not expose sensitive secrets
+        health = res.data['system_health']
+        assert health is not None
+        assert 'email_smtp' in health
+        assert 'whatsapp' in health
+        assert 'callyzer' in health
+        assert 'password' not in str(health).lower()
+        assert 'token' not in health['whatsapp']

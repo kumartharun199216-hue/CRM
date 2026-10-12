@@ -180,8 +180,8 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
       case 'SALES_EMPLOYEE':
       default:
         return (
-          <span className="crm-pill bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] flex items-center gap-1.5" id="profile-hero-role-badge">
-            <GraduationCap className="w-3.5 h-3.5 text-[#2563EB]" /> Career Counsellor
+          <span className="crm-pill bg-[#EFF6FF] dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 border border-[#BFDBFE] dark:border-blue-900/50 flex items-center gap-1.5" id="profile-hero-role-badge">
+            <GraduationCap className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" /> Career Counsellor
           </span>
         );
     }
@@ -236,15 +236,15 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12" id="my-profile-page">
       {/* Top Breadcrumb & Actions Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E2E8F0] pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E2E8F0] dark:border-[#334155] pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold tracking-tight text-[#0F172A] m-0">My Profile</h2>
-            <span className="crm-pill bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0] text-[11px] font-mono">
+            <h2 className="text-xl font-bold tracking-tight text-[#0F172A] dark:text-[#F8FAFC] m-0">My Profile</h2>
+            <span className="crm-pill bg-[#F1F5F9] dark:bg-[#1E293B] text-[#64748B] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#334155] text-[11px] font-mono">
               {displayEmployeeId}
             </span>
           </div>
-          <p className="text-xs text-[#64748B] font-medium m-0 truncate mt-0.5">
+          <p className="text-xs text-[#64748B] dark:text-[#94A3B8] font-medium m-0 truncate mt-0.5">
             Manage your personal profile details, contact preferences, and view organizational credentials.
           </p>
         </div>
@@ -267,9 +267,9 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
               type="button"
               id="change-password-nav-btn"
               onClick={onNavigateToChangePassword}
-              className="crm-btn-secondary px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs hover:bg-[#EFF6FF] hover:text-[#2563EB] hover:border-[#BFDBFE]"
+              className="crm-btn-secondary px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs hover:bg-[#EFF6FF] dark:hover:bg-[#172554] hover:text-[#2563EB] dark:hover:text-[#60A5FA] hover:border-[#BFDBFE] dark:hover:border-[#3B82F6]"
             >
-              <KeyRound className="w-3.5 h-3.5 text-[#2563EB]" />
+              <KeyRound className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#60A5FA]" />
               <span>Change Password</span>
             </button>
           )}
@@ -293,7 +293,7 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
                 disabled={saving}
                 className="crm-btn-secondary px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                <X className="w-3.5 h-3.5 text-[#64748B]" />
+                <X className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
                 <span>Cancel</span>
               </button>
               <button
@@ -324,16 +324,16 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
       {successMessage && (
         <div
           id="profile-success-alert"
-          className="p-3.5 bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl text-xs text-[#065F46] flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200"
+          className="p-3.5 bg-[#ECFDF5] dark:bg-emerald-950/30 border border-[#A7F3D0] dark:border-emerald-800 rounded-xl text-xs text-[#065F46] dark:text-emerald-300 flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200"
         >
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#059669] dark:text-emerald-400 shrink-0" />
             <span className="font-medium">{successMessage}</span>
           </div>
           <button
             type="button"
             onClick={() => setSuccessMessage(null)}
-            className="text-[#059669] hover:text-[#065F46] font-bold text-sm cursor-pointer"
+            className="text-[#059669] dark:text-emerald-400 hover:text-[#065F46] dark:hover:text-emerald-300 font-bold text-sm cursor-pointer"
           >
             ×
           </button>
@@ -343,16 +343,16 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
       {errorMessage && (
         <div
           id="profile-error-alert"
-          className="p-3.5 bg-[#FEF2F2] border border-[#FECACA] rounded-xl text-xs text-[#DC2626] flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200"
+          className="p-3.5 bg-[#FEF2F2] dark:bg-rose-950/30 border border-[#FECACA] dark:border-rose-900/50 rounded-xl text-xs text-[#DC2626] dark:text-rose-400 flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200"
         >
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0" />
+            <AlertCircle className="w-4 h-4 text-[#DC2626] dark:text-rose-400 shrink-0" />
             <span className="font-medium">{errorMessage}</span>
           </div>
           <button
             type="button"
             onClick={() => setErrorMessage(null)}
-            className="text-[#DC2626] hover:text-[#991B1B] font-bold text-sm cursor-pointer"
+            className="text-[#DC2626] dark:text-rose-400 hover:text-[#991B1B] dark:hover:text-rose-300 font-bold text-sm cursor-pointer"
           >
             ×
           </button>
@@ -360,7 +360,7 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
       )}
 
       {/* Hero Profile Banner Card */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-xs">
+      <div className="bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl overflow-hidden shadow-xs">
         <div className="h-28 bg-gradient-to-r from-[#1E3A8A] via-[#2563EB] to-[#4F46E5] relative p-6">
           <div className="absolute top-3 right-4 flex items-center gap-2">
             <span className="text-[11px] font-medium text-white/80 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs border border-white/15">
@@ -373,7 +373,7 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 mb-4">
             <div className="flex items-end gap-4">
               {/* Profile Avatar / Initials */}
-              <div className="w-22 h-22 rounded-2xl bg-white p-1 border-2 border-white shadow-md shrink-0">
+              <div className="w-22 h-22 rounded-2xl bg-white dark:bg-[#172033] p-1 border-2 border-white dark:border-[#334155] shadow-md shrink-0">
                 <div className="w-full h-full rounded-xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center text-white text-2xl font-bold tracking-wider shadow-inner">
                   {getInitials(displayName)}
                 </div>
@@ -381,15 +381,15 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
 
               <div className="space-y-1 mb-1">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-xl font-bold text-[#0F172A] tracking-tight m-0" id="profile-hero-name">
+                  <h1 className="text-xl font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight m-0" id="profile-hero-name">
                     {displayName}
                   </h1>
                   <span
                     id="profile-hero-status-badge"
                     className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
                       profile.is_active !== false
-                        ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
-                        : 'bg-[#F1F5F9] text-[#64748B] border-[#E2E8F0]'
+                        ? 'bg-[#ECFDF5] dark:bg-emerald-950/40 text-[#059669] dark:text-emerald-400 border-[#A7F3D0] dark:border-emerald-800'
+                        : 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#64748B] dark:text-[#CBD5E1] border-[#E2E8F0] dark:border-[#334155]'
                     }`}
                   >
                     <span
@@ -400,10 +400,10 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
                     {profile.account_status || (profile.is_active !== false ? 'ACTIVE' : 'INACTIVE')}
                   </span>
                 </div>
-                <p className="text-xs text-[#64748B] font-medium m-0 flex items-center gap-2">
-                  <span className="font-semibold text-[#334155]">{displayDesignation}</span>
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] font-medium m-0 flex items-center gap-2">
+                  <span className="font-semibold text-[#334155] dark:text-[#CBD5E1]">{displayDesignation}</span>
                   <span>•</span>
-                  <span className="font-mono text-[11px] bg-[#F8FAFC] px-1.5 py-0.5 rounded text-[#475569] border border-[#E2E8F0]" id="profile-hero-employee-id">
+                  <span className="font-mono text-[11px] bg-[#F8FAFC] dark:bg-[#111827] px-1.5 py-0.5 rounded text-[#475569] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#334155]" id="profile-hero-employee-id">
                     {displayEmployeeId}
                   </span>
                 </p>
@@ -416,39 +416,39 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
           </div>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[#E2E8F0]">
-            <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]/60">
-              <div className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-[#2563EB]" /> Team
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[#E2E8F0] dark:border-[#334155]">
+            <div className="p-3 bg-[#F8FAFC] dark:bg-[#111827] rounded-xl border border-[#E2E8F0]/60 dark:border-[#334155]">
+              <div className="text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" /> Team
               </div>
-              <div className="text-xs font-bold text-[#0F172A] truncate mt-1">
+              <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate mt-1">
                 {profile.team_name || (profile.team ? `Team #${profile.team}` : 'Unassigned')}
               </div>
             </div>
 
-            <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]/60">
-              <div className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
-                <Building className="w-3.5 h-3.5 text-[#2563EB]" /> Department
+            <div className="p-3 bg-[#F8FAFC] dark:bg-[#111827] rounded-xl border border-[#E2E8F0]/60 dark:border-[#334155]">
+              <div className="text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5">
+                <Building className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" /> Department
               </div>
-              <div className="text-xs font-bold text-[#0F172A] truncate mt-1">
+              <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate mt-1">
                 {profile.department || 'Admissions'}
               </div>
             </div>
 
-            <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]/60">
-              <div className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[#2563EB]" /> Work Location
+            <div className="p-3 bg-[#F8FAFC] dark:bg-[#111827] rounded-xl border border-[#E2E8F0]/60 dark:border-[#334155]">
+              <div className="text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" /> Work Location
               </div>
-              <div className="text-xs font-bold text-[#0F172A] truncate mt-1">
+              <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate mt-1">
                 {profile.work_location || 'Headquarters'}
               </div>
             </div>
 
-            <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]/60">
-              <div className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#2563EB]" /> Joined Date
+            <div className="p-3 bg-[#F8FAFC] dark:bg-[#111827] rounded-xl border border-[#E2E8F0]/60 dark:border-[#334155]">
+              <div className="text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" /> Joined Date
               </div>
-              <div className="text-xs font-bold text-[#0F172A] truncate mt-1">
+              <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate mt-1">
                 {formatDate(profile.date_of_joining || profile.date_joined)}
               </div>
             </div>
@@ -459,21 +459,21 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
       {/* Main Details Form / View */}
       <form onSubmit={handleSaveProfile} className="space-y-6">
         {/* Section 1: Permitted Personal Details */}
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+        <div className="bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] pb-3">
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 m-0">
-                <UserIcon className="w-4 h-4 text-[#2563EB]" />
+              <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2 m-0">
+                <UserIcon className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
                 <span>Personal & Contact Information</span>
               </h3>
-              <p className="text-[11px] text-[#64748B] mt-0.5 m-0">
+              <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5 m-0">
                 {isEditing
                   ? 'Update your name, mobile phone number, and work location.'
                   : 'Your personal identification and direct contact preferences.'}
               </p>
             </div>
             {isEditing && (
-              <span className="text-[11px] font-semibold text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] px-2.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-semibold text-[#2563EB] dark:text-blue-400 bg-[#EFF6FF] dark:bg-blue-950/40 border border-[#BFDBFE] dark:border-blue-900/50 px-2.5 py-0.5 rounded-full">
                 Editing Permitted Fields
               </span>
             )}
@@ -482,7 +482,7 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Full Name */}
             <div>
-              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+              <label className="block text-xs font-semibold text-[#334155] dark:text-[#CBD5E1] mb-1.5">
                 Full Name <span className="text-[#DC2626]">*</span>
               </label>
               {isEditing ? (
@@ -494,20 +494,20 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                     placeholder="e.g. John Doe"
                     disabled={saving}
-                    className={`w-full px-3 py-2 text-xs rounded-lg border bg-white text-[#0F172A] focus:outline-hidden focus:ring-2 transition ${
+                    className={`w-full px-3 py-2 text-xs rounded-lg border bg-white dark:bg-[#111827] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 transition ${
                       formErrors.fullName
                         ? 'border-[#EF4444] focus:ring-[#EF4444]/20'
-                        : 'border-[#CBD5E1] focus:border-[#2563EB] focus:ring-[#2563EB]/20'
+                        : 'border-[#CBD5E1] dark:border-[#334155] focus:border-[#2563EB] focus:ring-[#2563EB]/20'
                     }`}
                   />
                   {formErrors.fullName && (
-                    <p className="text-[11px] text-[#DC2626] mt-1 font-medium">{formErrors.fullName}</p>
+                    <p className="text-[11px] text-[#DC2626] dark:text-rose-400 mt-1 font-medium">{formErrors.fullName}</p>
                   )}
                 </div>
               ) : (
                 <div
                   id="profile-field-full-name"
-                  className="px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A]"
+                  className="px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC]"
                 >
                   {displayName}
                 </div>
@@ -516,13 +516,13 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
 
             {/* Mobile Number */}
             <div>
-              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+              <label className="block text-xs font-semibold text-[#334155] dark:text-[#CBD5E1] mb-1.5">
                 Mobile Number
               </label>
               {isEditing ? (
                 <div>
                   <div className="relative">
-                    <Phone className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-2.5 pointer-events-none" />
+                    <Phone className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8] absolute left-3 top-2.5 pointer-events-none" />
                     <input
                       type="tel"
                       id="profile-input-mobile"
@@ -530,15 +530,15 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
                       onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
                       placeholder="e.g. +91 9876543210"
                       disabled={saving}
-                      className={`w-full pl-9 pr-3 py-2 text-xs rounded-lg border bg-white text-[#0F172A] focus:outline-hidden focus:ring-2 transition ${
+                      className={`w-full pl-9 pr-3 py-2 text-xs rounded-lg border bg-white dark:bg-[#111827] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 transition ${
                         formErrors.mobile_number || formErrors.mobileNumber
                           ? 'border-[#EF4444] focus:ring-[#EF4444]/20'
-                          : 'border-[#CBD5E1] focus:border-[#2563EB] focus:ring-[#2563EB]/20'
+                          : 'border-[#CBD5E1] dark:border-[#334155] focus:border-[#2563EB] focus:ring-[#2563EB]/20'
                       }`}
                     />
                   </div>
                   {(formErrors.mobile_number || formErrors.mobileNumber) && (
-                    <p className="text-[11px] text-[#DC2626] mt-1 font-medium">
+                    <p className="text-[11px] text-[#DC2626] dark:text-rose-400 mt-1 font-medium">
                       {formErrors.mobile_number || formErrors.mobileNumber}
                     </p>
                   )}
@@ -546,9 +546,9 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
               ) : (
                 <div
                   id="profile-field-mobile"
-                  className="px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] flex items-center gap-2"
+                  className="px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2"
                 >
-                  <Phone className="w-3.5 h-3.5 text-[#64748B]" />
+                  <Phone className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
                   <span>{profile.mobile_number || 'Not provided'}</span>
                 </div>
               )}
@@ -556,13 +556,13 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
 
             {/* Work Location */}
             <div>
-              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+              <label className="block text-xs font-semibold text-[#334155] dark:text-[#CBD5E1] mb-1.5">
                 Work Location / Office Branch
               </label>
               {isEditing ? (
                 <div>
                   <div className="relative">
-                    <MapPin className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-2.5 pointer-events-none" />
+                    <MapPin className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8] absolute left-3 top-2.5 pointer-events-none" />
                     <input
                       type="text"
                       id="profile-input-work-location"
@@ -570,16 +570,16 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
                       onChange={(e) => setFormData({ ...formData, workLocation: e.target.value })}
                       placeholder="e.g. Headquarters, Building B"
                       disabled={saving}
-                      className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-[#CBD5E1] bg-white text-[#0F172A] focus:outline-hidden focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition"
+                      className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-[#CBD5E1] dark:border-[#334155] bg-white dark:bg-[#111827] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition"
                     />
                   </div>
                 </div>
               ) : (
                 <div
                   id="profile-field-work-location"
-                  className="px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] flex items-center gap-2"
+                  className="px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2"
                 >
-                  <MapPin className="w-3.5 h-3.5 text-[#64748B]" />
+                  <MapPin className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
                   <span>{profile.work_location || 'Not specified'}</span>
                 </div>
               )}
@@ -588,26 +588,26 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
             {/* Email Address (Protected / Read-Only with security explanation) */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-[#334155] flex items-center gap-1.5">
+                <label className="text-xs font-semibold text-[#334155] dark:text-[#CBD5E1] flex items-center gap-1.5">
                   <span>Email Address</span>
-                  <Lock className="w-3 h-3 text-[#64748B]" />
+                  <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
                 </label>
-                <span className="text-[10px] text-[#64748B] font-medium">Policy Protected</span>
+                <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-medium">Policy Protected</span>
               </div>
               <div
                 id="profile-field-email"
-                className="px-3.5 py-2.5 bg-[#F1F5F9]/70 border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#334155] flex items-center justify-between cursor-not-allowed"
+                className="px-3.5 py-2.5 bg-[#F1F5F9]/70 dark:bg-[#111827]/70 border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#334155] dark:text-[#CBD5E1] flex items-center justify-between cursor-not-allowed"
                 title="Email changes must follow the authorized verification and security policy."
               >
                 <div className="flex items-center gap-2 truncate">
-                  <Mail className="w-3.5 h-3.5 text-[#64748B] shrink-0" />
+                  <Mail className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8] shrink-0" />
                   <span className="truncate">{profile.email}</span>
                 </div>
-                <span className="text-[10px] font-mono text-[#64748B] uppercase tracking-wider bg-white px-2 py-0.5 rounded border border-[#E2E8F0] shrink-0 ml-2">
+                <span className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider bg-white dark:bg-[#1E293B] px-2 py-0.5 rounded border border-[#E2E8F0] dark:border-[#334155] shrink-0 ml-2">
                   Read Only
                 </span>
               </div>
-              <p className="text-[10px] text-[#64748B] mt-1 italic">
+              <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] mt-1 italic">
                 Email changes require administrator approval and security verification.
               </p>
             </div>
@@ -615,32 +615,32 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
         </div>
 
         {/* Section 2: Protected Employment & Organization Details */}
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+        <div className="bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] pb-3">
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 m-0">
-                <Briefcase className="w-4 h-4 text-[#7C3AED]" />
+              <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2 m-0">
+                <Briefcase className="w-4 h-4 text-[#7C3AED] dark:text-purple-400" />
                 <span>Employment & Organization Details</span>
               </h3>
-              <p className="text-[11px] text-[#64748B] mt-0.5 m-0">
+              <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5 m-0">
                 Official HR and administrative records. Protected from unauthorized self-modification.
               </p>
             </div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#64748B] bg-[#F1F5F9] border border-[#E2E8F0] px-2.5 py-0.5 rounded-full">
-              <Lock className="w-3 h-3 text-[#64748B]" /> Organization Managed
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#64748B] dark:text-[#94A3B8] bg-[#F1F5F9] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] px-2.5 py-0.5 rounded-full">
+              <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" /> Organization Managed
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {/* Employee ID */}
             <div>
-              <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <label className="block text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider mb-1.5 flex items-center gap-1">
                 <span>Employee ID</span>
-                <Lock className="w-3 h-3 text-[#64748B]" />
+                <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
               </label>
               <div
                 id="profile-field-employee-id"
-                className="px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-mono font-bold text-[#0F172A]"
+                className="px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-mono font-bold text-[#0F172A] dark:text-[#F8FAFC]"
               >
                 {displayEmployeeId}
               </div>
@@ -648,28 +648,28 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
 
             {/* Role */}
             <div>
-              <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <label className="block text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider mb-1.5 flex items-center gap-1">
                 <span>Assigned Role</span>
-                <Lock className="w-3 h-3 text-[#64748B]" />
+                <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
               </label>
               <div
                 id="profile-field-role"
-                className="px-3.5 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg flex items-center justify-between"
+                className="px-3.5 py-2 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg flex items-center justify-between"
               >
-                <span className="text-xs font-semibold text-[#0F172A]">{profile.role}</span>
+                <span className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{profile.role}</span>
                 {getRoleBadge(profile.role)}
               </div>
             </div>
 
             {/* Designation */}
             <div>
-              <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <label className="block text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider mb-1.5 flex items-center gap-1">
                 <span>Designation</span>
-                <Lock className="w-3 h-3 text-[#64748B]" />
+                <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
               </label>
               <div
                 id="profile-field-designation"
-                className="px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A]"
+                className="px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC]"
               >
                 {displayDesignation}
               </div>
@@ -677,13 +677,13 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
 
             {/* Department */}
             <div>
-              <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <label className="block text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider mb-1.5 flex items-center gap-1">
                 <span>Department</span>
-                <Lock className="w-3 h-3 text-[#64748B]" />
+                <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
               </label>
               <div
                 id="profile-field-department"
-                className="px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A]"
+                className="px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC]"
               >
                 {profile.department || 'Admissions & Student Operations'}
               </div>
@@ -691,35 +691,35 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
 
             {/* Date of Joining */}
             <div>
-              <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <label className="block text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider mb-1.5 flex items-center gap-1">
                 <span>Date of Joining</span>
-                <Lock className="w-3 h-3 text-[#64748B]" />
+                <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
               </label>
               <div
                 id="profile-field-date-of-joining"
-                className="px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] flex items-center gap-2"
+                className="px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2"
               >
-                <Calendar className="w-3.5 h-3.5 text-[#64748B]" />
+                <Calendar className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
                 <span>{formatDate(profile.date_of_joining)}</span>
               </div>
             </div>
 
             {/* Account Status */}
             <div>
-              <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <label className="block text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider mb-1.5 flex items-center gap-1">
                 <span>Account Status</span>
-                <Lock className="w-3 h-3 text-[#64748B]" />
+                <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
               </label>
               <div
                 id="profile-field-account-status"
-                className="px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-semibold flex items-center gap-2"
+                className="px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-semibold flex items-center gap-2"
               >
                 <span
                   className={`w-2 h-2 rounded-full ${
                     profile.is_active !== false ? 'bg-[#10B981]' : 'bg-[#94A3B8]'
                   }`}
                 />
-                <span className={profile.is_active !== false ? 'text-[#059669]' : 'text-[#64748B]'}>
+                <span className={profile.is_active !== false ? 'text-[#059669] dark:text-emerald-400' : 'text-[#64748B] dark:text-[#94A3B8]'}>
                   {profile.account_status || (profile.is_active !== false ? 'ACTIVE' : 'INACTIVE')}
                 </span>
               </div>
@@ -727,15 +727,15 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
 
             {/* Date Created */}
             <div>
-              <label className="block text-[11px] font-bold text-[#64748B] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <label className="block text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider mb-1.5 flex items-center gap-1">
                 <span>Account Created</span>
-                <Lock className="w-3 h-3 text-[#64748B]" />
+                <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
               </label>
               <div
                 id="profile-field-date-created"
-                className="px-3.5 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#64748B] flex items-center gap-2"
+                className="px-3.5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#64748B] dark:text-[#94A3B8] flex items-center gap-2"
               >
-                <Clock className="w-3.5 h-3.5 text-[#64748B]" />
+                <Clock className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
                 <span>{formatDateTime(profile.date_joined)}</span>
               </div>
             </div>
@@ -743,35 +743,35 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
         </div>
 
         {/* Section 3: Team & Reporting Hierarchy */}
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+        <div className="bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] pb-3">
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 m-0">
-                <Users className="w-4 h-4 text-[#059669]" />
+              <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2 m-0">
+                <Users className="w-4 h-4 text-[#059669] dark:text-emerald-400" />
                 <span>Team & Reporting Hierarchy</span>
               </h3>
-              <p className="text-[11px] text-[#64748B] mt-0.5 m-0">
+              <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] mt-0.5 m-0">
                 Operational team membership and direct supervisory structure.
               </p>
             </div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#64748B] bg-[#F1F5F9] border border-[#E2E8F0] px-2.5 py-0.5 rounded-full">
-              <Lock className="w-3 h-3 text-[#64748B]" /> Administrative Assignment
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#64748B] dark:text-[#94A3B8] bg-[#F1F5F9] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] px-2.5 py-0.5 rounded-full">
+              <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" /> Administrative Assignment
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Team Assignment */}
-            <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl space-y-2">
+            <div className="p-4 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
                   Assigned Team
                 </span>
-                <Lock className="w-3 h-3 text-[#64748B]" />
+                <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
               </div>
-              <div id="profile-field-team" className="text-sm font-bold text-[#0F172A]">
+              <div id="profile-field-team" className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                 {profile.team_name || (profile.team ? `Team #${profile.team}` : 'No Team Assigned')}
               </div>
-              <p className="text-[11px] text-[#64748B] m-0">
+              <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">
                 {profile.role === 'ADMIN'
                   ? 'As an Administrator, you have organization-wide oversight across all teams.'
                   : profile.role === 'MANAGER'
@@ -781,23 +781,23 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
             </div>
 
             {/* Reporting Manager */}
-            <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl space-y-2">
+            <div className="p-4 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
                   Reporting Manager
                 </span>
-                <Lock className="w-3 h-3 text-[#64748B]" />
+                <Lock className="w-3 h-3 text-[#64748B] dark:text-[#94A3B8]" />
               </div>
-              <div id="profile-field-reporting-manager" className="text-sm font-bold text-[#0F172A]">
+              <div id="profile-field-reporting-manager" className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                 {profile.reporting_manager_name || (profile.role === 'ADMIN' ? 'Executive Leadership' : profile.role === 'MANAGER' ? 'Head of Admissions' : 'Unassigned')}
               </div>
               {profile.reporting_manager_email && (
-                <div className="text-xs text-[#2563EB] flex items-center gap-1.5">
+                <div className="text-xs text-[#2563EB] dark:text-blue-400 flex items-center gap-1.5">
                   <Mail className="w-3 h-3" />
                   <span>{profile.reporting_manager_email}</span>
                 </div>
               )}
-              <p className="text-[11px] text-[#64748B] m-0">
+              <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">
                 Direct reporting manager for performance reviews and escalated student approvals.
               </p>
             </div>
@@ -806,7 +806,7 @@ export const MyProfilePage: React.FC<MyProfilePageProps> = ({
 
         {/* Bottom Action Footer when editing */}
         {isEditing && (
-          <div className="flex items-center justify-end gap-3 p-4 bg-white border border-[#E2E8F0] rounded-xl shadow-xs">
+          <div className="flex items-center justify-end gap-3 p-4 bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] rounded-xl shadow-xs">
             <button
               type="button"
               onClick={handleCancelEdit}

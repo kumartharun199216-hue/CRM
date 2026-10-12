@@ -134,23 +134,23 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       id="edit-user-modal-overlay"
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-[#172033] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         id="edit-user-modal"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-[#111827]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
               <UserCheck className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900">Edit Employee Details</h2>
-                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-mono font-medium rounded border border-blue-200">
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Edit Employee Details</h2>
+                <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-mono font-medium rounded border border-blue-200 dark:border-blue-900/50">
                   {employeeId}
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Update account profile, credentials contact, and organizational assignments.
               </p>
             </div>
@@ -159,7 +159,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             type="button"
             onClick={onClose}
             id="close-edit-user-modal-btn"
-            className="w-8 h-8 rounded-lg hover:bg-slate-200/60 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+            className="w-8 h-8 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -170,10 +170,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           {/* General Error Alert */}
           {generalError && (
             <div
-              className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2.5 animate-in fade-in"
+              className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2.5 animate-in fade-in"
               id="edit-user-error-banner"
             >
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <span className="font-semibold">Update Error: </span>
                 <span>{generalError}</span>
@@ -183,8 +183,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
           {/* Manager Boundary Info Notice */}
           {isManager && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
-              <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+              <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold">Manager Scope: </span>
                 You are authorized to update contact details and designation for Counsellors within your team. Role and team assignments require System Administrator access.
@@ -194,14 +194,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
           {/* Section 1: Basic Information */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-1.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-1.5">
               Personal & Contact Information
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Full Name */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                   Full Name <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -217,23 +217,23 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                   placeholder="e.g. Rahul Sharma"
                   className={`w-full px-3 py-2 text-xs rounded-xl border ${
                     formErrors.fullName
-                      ? 'border-rose-400 bg-rose-50/30 ring-2 ring-rose-200'
-                      : 'border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+                      ? 'border-rose-400 bg-rose-50/30 dark:bg-rose-950/30 ring-2 ring-rose-200'
+                      : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30'
                   } outline-none transition`}
                 />
                 {formErrors.fullName && (
-                  <p className="mt-1 text-[11px] text-rose-600">{formErrors.fullName}</p>
+                  <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">{formErrors.fullName}</p>
                 )}
               </div>
 
               {/* Email Address */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1 flex items-center justify-between">
                   <span>
                     Email Address <span className="text-rose-500">*</span>
                   </span>
                   {!isAdmin && (
-                    <span className="text-[11px] text-slate-400 flex items-center gap-1 font-normal">
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-normal">
                       <Lock className="w-2.5 h-2.5" /> Admin Only
                     </span>
                   )}
@@ -254,21 +254,21 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     placeholder="rahul.sharma@skillmove.com"
                     className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl border ${
                       !isAdmin
-                        ? 'bg-slate-100/80 text-slate-500 cursor-not-allowed border-slate-200'
+                        ? 'bg-slate-100/80 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 cursor-not-allowed border-slate-200 dark:border-slate-700'
                         : formErrors.email
-                        ? 'border-rose-400 bg-rose-50/30 ring-2 ring-rose-200'
-                        : 'border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+                        ? 'border-rose-400 bg-rose-50/30 dark:bg-rose-950/30 ring-2 ring-rose-200'
+                        : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30'
                     } outline-none transition`}
                   />
                 </div>
                 {formErrors.email && (
-                  <p className="mt-1 text-[11px] text-rose-600">{formErrors.email}</p>
+                  <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">{formErrors.email}</p>
                 )}
               </div>
 
               {/* Mobile Number */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                   Mobile Number <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -286,19 +286,19 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     placeholder="9876543210"
                     className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl border ${
                       formErrors.mobileNumber
-                        ? 'border-rose-400 bg-rose-50/30 ring-2 ring-rose-200'
-                        : 'border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+                        ? 'border-rose-400 bg-rose-50/30 dark:bg-rose-950/30 ring-2 ring-rose-200'
+                        : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30'
                     } outline-none transition font-mono`}
                   />
                 </div>
                 {formErrors.mobileNumber && (
-                  <p className="mt-1 text-[11px] text-rose-600">{formErrors.mobileNumber}</p>
+                  <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">{formErrors.mobileNumber}</p>
                 )}
               </div>
 
               {/* Designation */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                   Designation / Title
                 </label>
                 <input
@@ -307,7 +307,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                   value={designation}
                   onChange={(e) => setDesignation(e.target.value)}
                   placeholder="e.g. Senior Admissions Counsellor"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition"
                 />
               </div>
             </div>
@@ -315,10 +315,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
           {/* Section 2: Role & Organization Assignments */}
           <div className="space-y-4 pt-1">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-1.5 flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-1.5 flex items-center justify-between">
               <span>Role & Organizational Assignment</span>
               {!isAdmin && (
-                <span className="text-[11px] text-slate-400 normal-case font-normal flex items-center gap-1">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 normal-case font-normal flex items-center gap-1">
                   <Lock className="w-2.5 h-2.5" /> Managed by System Admin
                 </span>
               )}
@@ -327,7 +327,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Role Selection */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                   System Role
                 </label>
                 {isAdmin ? (
@@ -335,14 +335,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     id="edit-user-role-select"
                     value={role}
                     onChange={(e) => setRole(e.target.value as UserRole)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition cursor-pointer"
                   >
                     <option value="SALES_EMPLOYEE">Career Counsellor (Sales Employee)</option>
                     <option value="MANAGER">Sales Manager</option>
                     <option value="ADMIN">System Administrator</option>
                   </select>
                 ) : (
-                  <div className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-100 text-slate-600 flex items-center justify-between cursor-not-allowed">
+                  <div className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 flex items-center justify-between cursor-not-allowed">
                     <span className="font-medium">
                       {role === 'SALES_EMPLOYEE'
                         ? 'Career Counsellor'
@@ -357,7 +357,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
               {/* Team Assignment */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                   Assigned Team
                 </label>
                 {isAdmin ? (
@@ -365,7 +365,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     id="edit-user-team-select"
                     value={teamId}
                     onChange={(e) => setTeamId(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition cursor-pointer"
                   >
                     <option value="">No Team Assigned</option>
                     {teams.map((t) => (
@@ -375,7 +375,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     ))}
                   </select>
                 ) : (
-                  <div className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-100 text-slate-600 flex items-center justify-between cursor-not-allowed">
+                  <div className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 flex items-center justify-between cursor-not-allowed">
                     <span className="font-medium">{user.team_name || 'Assigned Team'}</span>
                     <Lock className="w-3.5 h-3.5 text-slate-400" />
                   </div>
@@ -384,7 +384,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
               {/* Department */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                   Department
                 </label>
                 <div className="relative">
@@ -395,14 +395,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
                     placeholder="Admissions & Counselling"
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition"
                   />
                 </div>
               </div>
 
               {/* Work Location */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                   Work Location
                 </label>
                 <div className="relative">
@@ -413,14 +413,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     value={workLocation}
                     onChange={(e) => setWorkLocation(e.target.value)}
                     placeholder="Bangalore HQ"
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition"
                   />
                 </div>
               </div>
 
               {/* Date of Joining */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
                   Date of Joining
                 </label>
                 <div className="relative">
@@ -430,7 +430,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     id="edit-user-doj-input"
                     value={dateOfJoining}
                     onChange={(e) => setDateOfJoining(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition"
                   />
                 </div>
               </div>
@@ -438,13 +438,13 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           </div>
 
           {/* Footer Controls */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
               id="cancel-edit-user-btn"
               disabled={submitting}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
             >
               Cancel
             </button>

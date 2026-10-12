@@ -574,17 +574,17 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
   return (
     <div className="space-y-6 max-w-7xl mx-auto font-sans pb-12">
       {/* Top Banner / Header */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className="bg-white dark:bg-[#172033] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#7C3AED] flex items-center justify-center text-white shadow-sm shrink-0">
               <FileSpreadsheet className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold text-[#0F172A] tracking-tight m-0">
+              <h1 className="text-xl font-extrabold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight m-0">
                 Bulk Import Leads
               </h1>
-              <p className="text-xs text-[#64748B] font-medium m-0 mt-0.5">
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] font-medium m-0 mt-0.5">
                 Import lead databases, campus drive lists, or job portal spreadsheets directly into your CRM pipeline with controlled team assignment.
               </p>
             </div>
@@ -599,7 +599,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
             className="crm-btn-secondary px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-2xs hover:border-[#2563EB]/40"
             title="Download sample formatted Excel template (.xlsx)"
           >
-            <Download className="w-3.5 h-3.5 text-[#2563EB]" />
+            <Download className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#60A5FA]" />
             <span>Download Sample Excel</span>
           </button>
 
@@ -609,31 +609,31 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
             className="crm-btn-secondary px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-2xs hover:border-[#2563EB]/40"
             title="Download sample formatted CSV template (.csv)"
           >
-            <Download className="w-3.5 h-3.5 text-[#64748B]" />
+            <Download className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
             <span>Download Sample CSV</span>
           </button>
 
           <button
             type="button"
             onClick={() => onNavigateToPipeline(selectedStageId)}
-            className="crm-btn-secondary px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-2xs text-[#2563EB] hover:bg-[#EFF6FF]"
+            className="crm-btn-secondary px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-2xs text-[#2563EB] dark:text-[#60A5FA] hover:bg-[#EFF6FF] dark:hover:bg-[#172554]/40"
             title="View Leads in CRM Pipeline"
           >
-            <Layers className="w-3.5 h-3.5 text-[#2563EB]" />
+            <Layers className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#60A5FA]" />
             <span>View Pipeline</span>
           </button>
         </div>
       </div>
 
       {/* Workspace Tabs: New Import vs Import History */}
-      <div className="flex items-center gap-2 border-b border-[#E2E8F0] pb-2">
+      <div className="flex items-center gap-2 border-b border-[#E2E8F0] dark:border-[#334155] pb-2">
         <button
           type="button"
           onClick={() => setActiveTab('import')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'import'
               ? 'bg-[#2563EB] text-white shadow-xs'
-              : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white'
+              : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-white dark:hover:bg-[#172033]'
           }`}
         >
           <UploadCloud className="w-4 h-4" />
@@ -646,7 +646,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'history'
               ? 'bg-[#2563EB] text-white shadow-xs'
-              : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white'
+              : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-white dark:hover:bg-[#172033]'
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -660,16 +660,16 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
       {activeTab === 'import' && (
         <div className="space-y-6">
           {/* STEP 1: IMPORT CONFIGURATION & EMPLOYEE ASSIGNMENT */}
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-xs space-y-6">
-            <div className="flex items-center gap-3 border-b border-[#F1F5F9] pb-4">
-              <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] flex items-center justify-center text-xs font-bold shrink-0">
+          <div className="bg-white dark:bg-[#172033] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] p-6 shadow-xs space-y-6">
+            <div className="flex items-center gap-3 border-b border-[#F1F5F9] dark:border-[#334155] pb-4">
+              <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] dark:bg-[#172554] text-[#2563EB] dark:text-[#60A5FA] border border-[#BFDBFE] dark:border-[#1E40AF] flex items-center justify-center text-xs font-bold shrink-0">
                 1
               </span>
               <div>
-                <h2 className="text-sm font-bold text-[#0F172A] m-0">
+                <h2 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] m-0">
                   Target Pipeline & Team Assignment
                 </h2>
-                <p className="text-[11px] text-[#64748B] m-0">
+                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">
                   Configure where the leads will land in your admissions funnel and assign counsellors.
                 </p>
               </div>
@@ -678,14 +678,14 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Target Pipeline Stage */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#0F172A]">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
                   Target Pipeline Stage <span className="text-[#2563EB]">*</span>
                 </label>
                 <select
                   id="import-stage-select"
                   value={selectedStageId}
                   onChange={(e) => setSelectedStageId(Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition"
+                  className="w-full h-10 px-3 bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition"
                 >
                   {activeStages.map((stage) => (
                     <option key={stage.id} value={stage.id}>
@@ -693,21 +693,21 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-[#64748B] m-0">
+                <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] m-0">
                   Defaults to Cold Calling or initial stage.
                 </p>
               </div>
 
               {/* Lead / Database Source */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#0F172A]">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
                   Lead / Database Source <span className="text-[#2563EB]">*</span>
                 </label>
                 <select
                   id="import-source-select"
                   value={sourceType}
                   onChange={(e) => setSourceType(e.target.value)}
-                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition"
+                  className="w-full h-10 px-3 bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition"
                 >
                   {DEFAULT_SOURCES.map((src) => (
                     <option key={src} value={src}>
@@ -721,21 +721,21 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     value={customSource}
                     onChange={(e) => setCustomSource(e.target.value)}
                     placeholder="Enter custom source name..."
-                    className="w-full h-9 px-3 bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB] mt-1"
+                    className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] mt-1"
                   />
                 )}
               </div>
 
               {/* Default Priority */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#0F172A]">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
                   Default Priority <span className="text-[#2563EB]">*</span>
                 </label>
                 <select
                   id="import-priority-select"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition"
+                  className="w-full h-10 px-3 bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition"
                 >
                   {PRIORITIES.map((p) => (
                     <option key={p.value} value={p.value}>
@@ -743,7 +743,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-[#64748B] m-0">
+                <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] m-0">
                   Applied when row does not specify priority.
                 </p>
               </div>
@@ -751,7 +751,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
               {/* Optional Team Scope (For Admin) */}
               {currentUser.role === 'ADMIN' && teams.length > 0 && (
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-[#0F172A]">
+                  <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
                     Filter Team Scope (Optional)
                   </label>
                   <select
@@ -761,7 +761,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                       setSelectedTeamId(e.target.value ? Number(e.target.value) : '');
                       setSelectedEmployeeIds([]);
                     }}
-                    className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition"
+                    className="w-full h-10 px-3 bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition"
                   >
                     <option value="">All Organization Teams</option>
                     {teams.map((team) => (
@@ -770,7 +770,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                       </option>
                     ))}
                   </select>
-                  <p className="text-[10px] text-[#64748B] m-0">
+                  <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] m-0">
                     Filter counsellors belonging to a specific team.
                   </p>
                 </div>
@@ -779,7 +779,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
             {/* Batch Note / Campaign Tag */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-[#0F172A] flex items-center gap-1.5">
+              <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
                 <Tag className="w-3.5 h-3.5 text-[#7C3AED]" />
                 <span>Batch Note / Campaign Tag (Optional)</span>
               </label>
@@ -789,27 +789,27 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                 value={batchNote}
                 onChange={(e) => setBatchNote(e.target.value)}
                 placeholder="e.g. Pune University 2026 CS Batch - Uncalled Campus Drive Raw Data"
-                className="w-full h-10 px-3.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition placeholder-[#94A3B8]"
+                className="w-full h-10 px-3.5 bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-lg text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition placeholder-[#94A3B8] dark:placeholder-[#64748B]"
               />
-              <p className="text-[10px] text-[#64748B] m-0">
+              <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] m-0">
                 Helps you identify and track this specific import batch in history and reports.
               </p>
             </div>
 
             {/* EMPLOYEE ASSIGNMENT SECTION */}
-            <div className="p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-4">
+            <div className="p-4 bg-[#F8FAFC] dark:bg-[#111827] rounded-xl border border-[#E2E8F0] dark:border-[#334155] space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider m-0">
+                  <h3 className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] uppercase tracking-wider m-0">
                     Employee Lead Assignment
                   </h3>
-                  <p className="text-[11px] text-[#64748B] m-0 mt-0.5">
+                  <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0 mt-0.5">
                     Valid leads are distributed deterministically and evenly across selected counsellors.
                   </p>
                 </div>
 
                 {/* Import as Unassigned Leads Checkbox */}
-                <label className="flex items-center gap-2.5 p-2 bg-white rounded-lg border border-[#CBD5E1] shadow-2xs cursor-pointer hover:border-[#2563EB] transition select-none">
+                <label className="flex items-center gap-2.5 p-2 bg-white dark:bg-[#172033] rounded-lg border border-[#CBD5E1] dark:border-[#334155] shadow-2xs cursor-pointer hover:border-[#2563EB] transition select-none">
                   <input
                     id="import-unassigned-checkbox"
                     type="checkbox"
@@ -820,11 +820,11 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                         setAssignmentError(null);
                       }
                     }}
-                    className="w-4 h-4 text-[#2563EB] rounded border-[#CBD5E1] focus:ring-[#2563EB]"
+                    className="w-4 h-4 text-[#2563EB] rounded border-[#CBD5E1] dark:border-[#475569] focus:ring-[#2563EB]"
                   />
                   <div className="text-xs">
-                    <span className="font-semibold text-[#0F172A]">Import as Unassigned Leads</span>
-                    <span className="text-[10px] text-[#64748B] block">Pool into unassigned triage queue</span>
+                    <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Import as Unassigned Leads</span>
+                    <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] block">Pool into unassigned triage queue</span>
                   </div>
                 </label>
               </div>
@@ -847,24 +847,24 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
               )}
 
               {/* Distribution Summary Card */}
-              <div className="p-3 bg-white rounded-lg border border-[#E2E8F0] flex items-center justify-between gap-3">
+              <div className="p-3 bg-white dark:bg-[#172033] rounded-lg border border-[#E2E8F0] dark:border-[#334155] flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
                     className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 ${
                       isUnassigned
-                        ? 'bg-[#FEF3C7] text-[#D97706]'
+                        ? 'bg-[#FEF3C7] dark:bg-[#78350F]/30 text-[#D97706] dark:text-[#FBBF24]'
                         : selectedEmployeeIds.length > 0
-                        ? 'bg-[#EFF6FF] text-[#2563EB]'
-                        : 'bg-[#F1F5F9] text-[#94A3B8]'
+                        ? 'bg-[#EFF6FF] dark:bg-[#172554] text-[#2563EB] dark:text-[#60A5FA]'
+                        : 'bg-[#F1F5F9] dark:bg-[#1E293B] text-[#94A3B8] dark:text-[#64748B]'
                     }`}
                   >
                     <Users className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold text-[#0F172A] truncate">
+                    <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate">
                       {distributionBreakdown.summaryText}
                     </div>
-                    <div className="text-[11px] text-[#64748B] truncate">
+                    <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] truncate">
                       {distributionBreakdown.detailText}
                     </div>
                   </div>
@@ -876,7 +876,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     {distributionBreakdown.items.map((item, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-0.5 bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E3A8A] rounded-md text-[10px] font-medium"
+                        className="px-2 py-0.5 bg-[#EFF6FF] dark:bg-[#172554] border border-[#BFDBFE] dark:border-[#1E40AF] text-[#1E3A8A] dark:text-[#93C5FD] rounded-md text-[10px] font-medium"
                       >
                         {item.name}: <strong className="font-bold">{item.count}</strong>
                       </span>
@@ -888,17 +888,17 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
           </div>
 
           {/* STEP 2: EXCEL / CSV FILE UPLOAD */}
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-4">
+          <div className="bg-white dark:bg-[#172033] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#334155] pb-4">
               <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] flex items-center justify-center text-xs font-bold shrink-0">
+                <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] dark:bg-[#172554] text-[#2563EB] dark:text-[#60A5FA] border border-[#BFDBFE] dark:border-[#1E40AF] flex items-center justify-center text-xs font-bold shrink-0">
                   2
                 </span>
                 <div>
-                  <h2 className="text-sm font-bold text-[#0F172A] m-0">
+                  <h2 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] m-0">
                     Upload Excel Sheet (.xlsx / .xls) or CSV (.csv) File
                   </h2>
-                  <p className="text-[11px] text-[#64748B] m-0">
+                  <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">
                     Click to select or drag and drop your lead Excel or CSV file.
                   </p>
                 </div>
@@ -908,7 +908,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                 <button
                   type="button"
                   onClick={handleResetImport}
-                  className="text-xs text-[#DC2626] hover:bg-[#FEF2F2] px-2.5 py-1 rounded-md font-medium transition cursor-pointer"
+                  className="text-xs text-[#DC2626] dark:text-[#F87171] hover:bg-[#FEF2F2] dark:hover:bg-[#450A0A]/40 px-2.5 py-1 rounded-md font-medium transition cursor-pointer"
                 >
                   Clear File
                 </button>
@@ -933,8 +933,8 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                 onClick={() => fileInputRef.current?.click()}
                 className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition flex flex-col items-center justify-center gap-3 ${
                   isDragging
-                    ? 'border-[#2563EB] bg-[#EFF6FF]/60'
-                    : 'border-[#CBD5E1] bg-[#F8FAFC] hover:border-[#2563EB]/60 hover:bg-[#F1F5F9]'
+                    ? 'border-[#2563EB] bg-[#EFF6FF]/60 dark:bg-[#172554]/40'
+                    : 'border-[#CBD5E1] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#111827] hover:border-[#2563EB]/60 hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
                 }`}
               >
                 <input
@@ -948,14 +948,14 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     }
                   }}
                 />
-                <div className="w-12 h-12 rounded-2xl bg-white shadow-xs border border-[#E2E8F0] flex items-center justify-center text-[#2563EB]">
+                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-[#172033] shadow-xs border border-[#E2E8F0] dark:border-[#334155] flex items-center justify-center text-[#2563EB] dark:text-[#60A5FA]">
                   <UploadCloud className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-[#0F172A]">
+                  <div className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                     Click to select or drag and drop your lead file
                   </div>
-                  <div className="text-xs text-[#64748B] mt-0.5">
+                  <div className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
                     Supports Microsoft Excel (.xlsx, .xls) and Comma-Separated Values (.csv) up to 25MB
                   </div>
                 </div>
@@ -967,21 +967,21 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="p-4 bg-[#EFF6FF]/50 border border-[#BFDBFE] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-4 bg-[#EFF6FF]/50 dark:bg-[#172554]/30 border border-[#BFDBFE] dark:border-[#1E40AF]/40 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-white border border-[#BFDBFE] flex items-center justify-center text-[#2563EB] shadow-2xs shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#172033] border border-[#BFDBFE] dark:border-[#1E40AF] flex items-center justify-center text-[#2563EB] dark:text-[#60A5FA] shadow-2xs shrink-0">
                     <FileSpreadsheet className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#0F172A] truncate">
+                    <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
                       {file.name}
                     </div>
-                    <div className="text-[11px] text-[#64748B] flex items-center gap-2">
+                    <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] flex items-center gap-2">
                       <span>{(file.size / 1024).toFixed(1)} KB</span>
                       {previewData && (
                         <>
                           <span>·</span>
-                          <span className="font-semibold text-[#2563EB]">
+                          <span className="font-semibold text-[#2563EB] dark:text-[#60A5FA]">
                             {previewData.total_rows} rows parsed
                           </span>
                         </>
@@ -994,11 +994,11 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                   {/* Sheet Selector if multiple sheets */}
                   {previewData?.sheets && previewData.sheets.length > 1 && (
                     <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-[#64748B] font-medium">Sheet:</span>
+                      <span className="text-[#64748B] dark:text-[#94A3B8] font-medium">Sheet:</span>
                       <select
                         value={selectedSheet}
                         onChange={(e) => handleSheetChange(e.target.value)}
-                        className="h-8 px-2 bg-white border border-[#CBD5E1] rounded-md text-xs font-medium text-[#0F172A]"
+                        className="h-8 px-2 bg-white dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-md text-xs font-medium text-[#0F172A] dark:text-[#F8FAFC]"
                       >
                         {previewData.sheets.map((s) => (
                           <option key={s} value={s}>
@@ -1032,14 +1032,14 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
             )}
 
             {loadingPreview && (
-              <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center gap-2.5 text-xs text-[#2563EB]">
+              <div className="p-3 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl flex items-center gap-2.5 text-xs text-[#2563EB] dark:text-[#60A5FA]">
                 <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
                 <span>Parsing spreadsheet headers and analyzing rows...</span>
               </div>
             )}
 
             {previewError && (
-              <div className="p-3 bg-[#FEF2F2] border border-[#FECACA] rounded-xl text-xs text-[#DC2626] flex items-center gap-2">
+              <div className="p-3 bg-[#FEF2F2] dark:bg-[#450A0A]/30 border border-[#FECACA] dark:border-[#991B1B]/40 rounded-xl text-xs text-[#DC2626] dark:text-[#FCA5A5] flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{previewError}</span>
               </div>
@@ -1048,17 +1048,17 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
           {/* STEP 3: COLUMN MAPPING */}
           {previewData && (
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F1F5F9] pb-4">
+            <div className="bg-white dark:bg-[#172033] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] p-6 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F1F5F9] dark:border-[#334155] pb-4">
                 <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] flex items-center justify-center text-xs font-bold shrink-0">
+                  <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] dark:bg-[#172554] text-[#2563EB] dark:text-[#60A5FA] border border-[#BFDBFE] dark:border-[#1E40AF] flex items-center justify-center text-xs font-bold shrink-0">
                     3
                   </span>
                   <div>
-                    <h2 className="text-sm font-bold text-[#0F172A] m-0">
+                    <h2 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] m-0">
                       Column Mapping
                     </h2>
-                    <p className="text-[11px] text-[#64748B] m-0">
+                    <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">
                       Map headers from your spreadsheet to the corresponding CRM student lead fields.
                     </p>
                   </div>
@@ -1069,8 +1069,8 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     id="required-fields-badge"
                     className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
                       isMappingComplete
-                        ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
-                        : 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]'
+                        ? 'bg-[#ECFDF5] dark:bg-[#064E3B]/30 text-[#059669] dark:text-[#34D399] border-[#A7F3D0] dark:border-[#047857]/50'
+                        : 'bg-[#FFFBEB] dark:bg-[#78350F]/30 text-[#D97706] dark:text-[#FBBF24] border-[#FDE68A] dark:border-[#78350F]/50'
                     }`}
                   >
                     {isMappingComplete ? (
@@ -1087,8 +1087,8 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
               {/* Duplicate mapping warning alert */}
               {duplicateList.length > 0 && (
-                <div id="duplicate-mapping-alert" className="p-3 bg-[#FEF2F2] border border-[#FECACA] rounded-xl text-xs text-[#DC2626] flex items-center gap-2 shadow-2xs">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" />
+                <div id="duplicate-mapping-alert" className="p-3 bg-[#FEF2F2] dark:bg-[#450A0A]/30 border border-[#FECACA] dark:border-[#991B1B]/40 rounded-xl text-xs text-[#DC2626] dark:text-[#FCA5A5] flex items-center gap-2 shadow-2xs">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626] dark:text-[#F87171]" />
                   <span>
                     Duplicate column mapping detected: {duplicateList.map((d) => `"${d.label}" is mapped to multiple columns (${d.headers.join(', ')})`).join('; ')}. Each CRM field must be mapped to at most one spreadsheet column.
                   </span>
@@ -1096,16 +1096,16 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
               )}
 
               {/* Mapped Fields Grid / Table */}
-              <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
+              <div className="border border-[#E2E8F0] dark:border-[#334155] rounded-xl overflow-hidden">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#64748B] font-semibold text-[11px] uppercase tracking-wider">
+                  <thead className="bg-[#F8FAFC] dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#334155] text-[#64748B] dark:text-[#94A3B8] font-semibold text-[11px] uppercase tracking-wider">
                     <tr>
                       <th className="p-3">Spreadsheet Header</th>
                       <th className="p-3">Sample Value</th>
                       <th className="p-3">Mapped CRM Lead Field</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#F1F5F9]">
+                  <tbody className="divide-y divide-[#F1F5F9] dark:divide-[#334155]">
                     {previewData.headers.map((header) => {
                       const sampleVal = previewData.sample_rows?.[0]?.[header];
                       const currentMappedKey = columnMapping[header] || '';
@@ -1113,14 +1113,14 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                       const isDuplicate = Boolean(canonicalKey && (fieldToHeadersMap[canonicalKey]?.length || 0) > 1);
 
                       return (
-                        <tr key={header} className={`hover:bg-[#F8FAFC] ${isDuplicate ? 'bg-[#FEF2F2]/20' : ''}`}>
-                          <td className="p-3 font-semibold text-[#0F172A]">
+                        <tr key={header} className={`hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60 transition-colors ${isDuplicate ? 'bg-[#FEF2F2]/20 dark:bg-[#450A0A]/20' : ''}`}>
+                          <td className="p-3 font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
                             {header}
                           </td>
-                          <td className="p-3 text-[#64748B] max-w-[200px] truncate">
+                          <td className="p-3 text-[#64748B] dark:text-[#94A3B8] max-w-[200px] truncate">
                             {sampleVal !== undefined && sampleVal !== null && sampleVal !== ''
                               ? String(sampleVal)
-                              : <span className="text-[#94A3B8] italic">(empty)</span>}
+                              : <span className="text-[#94A3B8] dark:text-[#64748B] italic">(empty)</span>}
                           </td>
                           <td className="p-3">
                             <div className="space-y-1">
@@ -1137,12 +1137,12 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                                   setColumnMapping(newMapping);
                                   setValidationResult(null); // Invalidate previous validation
                                 }}
-                                className={`h-8 px-2.5 bg-white border rounded-lg text-xs font-medium focus:outline-none focus:border-[#2563EB] ${
+                                className={`h-8 px-2.5 bg-white dark:bg-[#111827] border rounded-lg text-xs font-medium focus:outline-none focus:border-[#2563EB] ${
                                   isDuplicate
-                                    ? 'border-[#FCA5A5] text-[#DC2626] font-semibold bg-[#FEF2F2]/40'
+                                    ? 'border-[#FCA5A5] dark:border-[#DC2626] text-[#DC2626] dark:text-[#F87171] font-semibold bg-[#FEF2F2]/40 dark:bg-[#450A0A]/30'
                                     : currentMappedKey
-                                    ? 'border-[#BFDBFE] text-[#1E3A8A] font-semibold bg-[#EFF6FF]/30'
-                                    : 'border-[#CBD5E1] text-[#64748B]'
+                                    ? 'border-[#BFDBFE] dark:border-[#1E40AF] text-[#1E3A8A] dark:text-[#93C5FD] font-semibold bg-[#EFF6FF]/30 dark:bg-[#172554]/40'
+                                    : 'border-[#CBD5E1] dark:border-[#334155] text-[#64748B] dark:text-[#94A3B8]'
                                 }`}
                               >
                                 <option value="">-- Do Not Import / Skip --</option>
@@ -1153,7 +1153,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                                 ))}
                               </select>
                               {isDuplicate && (
-                                <div className="text-[11px] text-[#DC2626] font-medium flex items-center gap-1">
+                                <div className="text-[11px] text-[#DC2626] dark:text-[#F87171] font-medium flex items-center gap-1">
                                   <AlertCircle className="w-3 h-3 shrink-0" />
                                   <span>Duplicate: mapped to multiple columns</span>
                                 </div>
@@ -1194,17 +1194,17 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
           {/* STEP 4: VALIDATION SUMMARY & DATA PREVIEW */}
           {validationResult && (
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F1F5F9] pb-4">
+            <div className="bg-white dark:bg-[#172033] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] p-6 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F1F5F9] dark:border-[#334155] pb-4">
                 <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] flex items-center justify-center text-xs font-bold shrink-0">
+                  <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] dark:bg-[#172554] text-[#2563EB] dark:text-[#60A5FA] border border-[#BFDBFE] dark:border-[#1E40AF] flex items-center justify-center text-xs font-bold shrink-0">
                     4
                   </span>
                   <div>
-                    <h2 className="text-sm font-bold text-[#0F172A] m-0">
+                    <h2 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] m-0">
                       Validation Results & Data Preview
                     </h2>
-                    <p className="text-[11px] text-[#64748B] m-0">
+                    <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">
                       Authoritative backend row validation, duplicate check, and per-counsellor allocations.
                     </p>
                   </div>
@@ -1217,7 +1217,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     className="crm-btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
                     title="Download validation results"
                   >
-                    <Download className="w-3.5 h-3.5 text-[#64748B]" />
+                    <Download className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
                     <span>Download Report</span>
                   </button>
                 </div>
@@ -1225,55 +1225,55 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
               {/* Metric Cards Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
-                  <div className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider">
+                <div className="p-4 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl">
+                  <div className="text-[11px] font-semibold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
                     Total Rows
                   </div>
-                  <div className="text-2xl font-extrabold text-[#0F172A] mt-1 font-mono">
+                  <div className="text-2xl font-extrabold text-[#0F172A] dark:text-[#F8FAFC] mt-1 font-mono">
                     {validationResult.total_rows}
                   </div>
-                  <div className="text-[10px] text-[#64748B] mt-0.5">Parsed from spreadsheet</div>
+                  <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] mt-0.5">Parsed from spreadsheet</div>
                 </div>
 
-                <div className="p-4 bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl">
-                  <div className="text-[11px] font-semibold text-[#059669] uppercase tracking-wider">
+                <div className="p-4 bg-[#ECFDF5] dark:bg-[#064E3B]/20 border border-[#A7F3D0] dark:border-[#047857]/40 rounded-xl">
+                  <div className="text-[11px] font-semibold text-[#059669] dark:text-[#34D399] uppercase tracking-wider">
                     Valid Leads
                   </div>
-                  <div className="text-2xl font-extrabold text-[#059669] mt-1 font-mono">
+                  <div className="text-2xl font-extrabold text-[#059669] dark:text-[#34D399] mt-1 font-mono">
                     {validationResult.valid_count}
                   </div>
-                  <div className="text-[10px] text-[#059669] mt-0.5">Ready for import</div>
+                  <div className="text-[10px] text-[#059669] dark:text-[#34D399] mt-0.5">Ready for import</div>
                 </div>
 
-                <div className="p-4 bg-[#FFFBEB] border border-[#FDE68A] rounded-xl">
-                  <div className="text-[11px] font-semibold text-[#D97706] uppercase tracking-wider">
+                <div className="p-4 bg-[#FFFBEB] dark:bg-[#78350F]/20 border border-[#FDE68A] dark:border-[#78350F]/40 rounded-xl">
+                  <div className="text-[11px] font-semibold text-[#D97706] dark:text-[#FBBF24] uppercase tracking-wider">
                     Duplicate Leads
                   </div>
-                  <div className="text-2xl font-extrabold text-[#D97706] mt-1 font-mono">
+                  <div className="text-2xl font-extrabold text-[#D97706] dark:text-[#FBBF24] mt-1 font-mono">
                     {validationResult.duplicate_count}
                   </div>
-                  <div className="text-[10px] text-[#D97706] mt-0.5">Matched by email/phone</div>
+                  <div className="text-[10px] text-[#D97706] dark:text-[#FBBF24] mt-0.5">Matched by email/phone</div>
                 </div>
 
-                <div className="p-4 bg-[#FEF2F2] border border-[#FECACA] rounded-xl">
-                  <div className="text-[11px] font-semibold text-[#DC2626] uppercase tracking-wider">
+                <div className="p-4 bg-[#FEF2F2] dark:bg-[#450A0A]/20 border border-[#FECACA] dark:border-[#991B1B]/40 rounded-xl">
+                  <div className="text-[11px] font-semibold text-[#DC2626] dark:text-[#F87171] uppercase tracking-wider">
                     Invalid Rows
                   </div>
-                  <div className="text-2xl font-extrabold text-[#DC2626] mt-1 font-mono">
+                  <div className="text-2xl font-extrabold text-[#DC2626] dark:text-[#F87171] mt-1 font-mono">
                     {validationResult.invalid_count}
                   </div>
-                  <div className="text-[10px] text-[#DC2626] mt-0.5">Missing phone/name/email</div>
+                  <div className="text-[10px] text-[#DC2626] dark:text-[#F87171] mt-0.5">Missing phone/name/email</div>
                 </div>
               </div>
 
               {/* Per-Employee Round-Robin Allocation Preview */}
               {!isUnassigned && distributionBreakdown.items.length > 0 && (
-                <div className="p-4 bg-[#EFF6FF]/60 border border-[#BFDBFE] rounded-xl space-y-2">
+                <div className="p-4 bg-[#EFF6FF]/60 dark:bg-[#172554]/30 border border-[#BFDBFE] dark:border-[#1E40AF]/40 rounded-xl space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#1E3A8A]">
+                    <span className="text-xs font-bold text-[#1E3A8A] dark:text-[#93C5FD]">
                       Balanced Round-Robin Allocation Preview:
                     </span>
-                    <span className="text-[11px] font-mono text-[#2563EB]">
+                    <span className="text-[11px] font-mono text-[#2563EB] dark:text-[#60A5FA]">
                       Max difference: ≤ 1 lead
                     </span>
                   </div>
@@ -1281,11 +1281,11 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     {distributionBreakdown.items.map((emp, idx) => (
                       <div
                         key={idx}
-                        className="p-2.5 bg-white border border-[#BFDBFE] rounded-lg text-center shadow-2xs"
+                        className="p-2.5 bg-white dark:bg-[#111827] border border-[#BFDBFE] dark:border-[#1E40AF]/40 rounded-lg text-center shadow-2xs"
                       >
-                        <div className="text-xs font-bold text-[#0F172A] truncate">{emp.name}</div>
-                        <div className="text-base font-extrabold text-[#2563EB] font-mono mt-0.5">
-                          {emp.count} <span className="text-[10px] font-normal text-[#64748B]">leads</span>
+                        <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">{emp.name}</div>
+                        <div className="text-base font-extrabold text-[#2563EB] dark:text-[#60A5FA] font-mono mt-0.5">
+                          {emp.count} <span className="text-[10px] font-normal text-[#64748B] dark:text-[#94A3B8]">leads</span>
                         </div>
                       </div>
                     ))}
@@ -1295,7 +1295,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
               {/* Filter & Search Bar for Rows */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-                <div className="flex items-center gap-1.5 bg-[#F1F5F9] p-1 rounded-lg">
+                <div className="flex items-center gap-1.5 bg-[#F1F5F9] dark:bg-[#111827] p-1 rounded-lg">
                   <button
                     type="button"
                     onClick={() => {
@@ -1304,8 +1304,8 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     }}
                     className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
                       previewFilter === 'ALL'
-                        ? 'bg-white text-[#0F172A] shadow-xs'
-                        : 'text-[#64748B] hover:text-[#0F172A]'
+                        ? 'bg-white dark:bg-[#172033] text-[#0F172A] dark:text-[#F8FAFC] shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
                     }`}
                   >
                     All ({validationResult.row_validations?.length || 0})
@@ -1318,8 +1318,8 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     }}
                     className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
                       previewFilter === 'VALID'
-                        ? 'bg-white text-[#059669] shadow-xs'
-                        : 'text-[#64748B] hover:text-[#059669]'
+                        ? 'bg-white dark:bg-[#172033] text-[#059669] dark:text-[#34D399] shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#059669] dark:hover:text-[#34D399]'
                     }`}
                   >
                     Valid Only ({validationResult.valid_count})
@@ -1332,8 +1332,8 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     }}
                     className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
                       previewFilter === 'DUPLICATE'
-                        ? 'bg-white text-[#D97706] shadow-xs'
-                        : 'text-[#64748B] hover:text-[#D97706]'
+                        ? 'bg-white dark:bg-[#172033] text-[#D97706] dark:text-[#FBBF24] shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#D97706] dark:hover:text-[#FBBF24]'
                     }`}
                   >
                     Duplicates ({validationResult.duplicate_count})
@@ -1346,8 +1346,8 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     }}
                     className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
                       previewFilter === 'INVALID'
-                        ? 'bg-white text-[#DC2626] shadow-xs'
-                        : 'text-[#64748B] hover:text-[#DC2626]'
+                        ? 'bg-white dark:bg-[#172033] text-[#DC2626] dark:text-[#F87171] shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#DC2626] dark:hover:text-[#F87171]'
                     }`}
                   >
                     Invalid Only ({validationResult.invalid_count})
@@ -1363,15 +1363,15 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                       setPreviewPage(1);
                     }}
                     placeholder="Search preview rows..."
-                    className="h-8 px-2.5 bg-white border border-[#CBD5E1] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB] w-48"
+                    className="h-8 px-2.5 bg-white dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] w-48"
                   />
                 </div>
               </div>
 
               {/* Rows Table */}
-              <div className="border border-[#E2E8F0] rounded-xl overflow-x-auto">
+              <div className="border border-[#E2E8F0] dark:border-[#334155] rounded-xl overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#64748B] font-semibold text-[11px] uppercase tracking-wider">
+                  <thead className="bg-[#F8FAFC] dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#334155] text-[#64748B] dark:text-[#94A3B8] font-semibold text-[11px] uppercase tracking-wider">
                     <tr>
                       <th className="p-3 w-16">Row #</th>
                       <th className="p-3">Lead Name</th>
@@ -1381,10 +1381,10 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                       <th className="p-3">Validation Details</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#F1F5F9]">
+                  <tbody className="divide-y divide-[#F1F5F9] dark:divide-[#334155]">
                     {paginatedPreviewRows.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-6 text-center text-xs text-[#64748B]">
+                        <td colSpan={6} className="p-6 text-center text-xs text-[#64748B] dark:text-[#94A3B8]">
                           No rows match the selected filter.
                         </td>
                       </tr>
@@ -1392,50 +1392,50 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                       paginatedPreviewRows.map((row) => (
                         <tr
                           key={row.row_number}
-                          className={`hover:bg-[#F8FAFC] ${
+                          className={`hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60 transition-colors ${
                             !row.is_valid
-                              ? 'bg-[#FEF2F2]/30'
+                              ? 'bg-[#FEF2F2]/30 dark:bg-[#450A0A]/20'
                               : row.is_duplicate
-                              ? 'bg-[#FFFBEB]/30'
+                              ? 'bg-[#FFFBEB]/30 dark:bg-[#78350F]/20'
                               : ''
                           }`}
                         >
-                          <td className="p-3 font-mono text-[#64748B]">#{row.row_number}</td>
-                          <td className="p-3 font-semibold text-[#0F172A]">
-                            {row.lead_name || row.data?.name || row.data?.lead_name || <span className="text-[#DC2626] italic">Missing</span>}
+                          <td className="p-3 font-mono text-[#64748B] dark:text-[#94A3B8]">#{row.row_number}</td>
+                          <td className="p-3 font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                            {row.lead_name || row.data?.name || row.data?.lead_name || <span className="text-[#DC2626] dark:text-[#F87171] italic">Missing</span>}
                           </td>
-                          <td className="p-3 text-[#475569]">
-                            {row.email || row.data?.email || <span className="text-[#DC2626] italic">Missing</span>}
+                          <td className="p-3 text-[#475569] dark:text-[#CBD5E1]">
+                            {row.email || row.data?.email || <span className="text-[#DC2626] dark:text-[#F87171] italic">Missing</span>}
                           </td>
-                          <td className="p-3 text-[#475569]">
-                            {row.phone || row.data?.phone || <span className="text-[#DC2626] italic">Missing</span>}
+                          <td className="p-3 text-[#475569] dark:text-[#CBD5E1]">
+                            {row.phone || row.data?.phone || <span className="text-[#DC2626] dark:text-[#F87171] italic">Missing</span>}
                           </td>
                           <td className="p-3">
                             {!row.is_valid ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF2F2] dark:bg-[#450A0A]/40 text-[#DC2626] dark:text-[#F87171] border border-[#FECACA] dark:border-[#991B1B]/40">
                                 <X className="w-3 h-3 stroke-[3]" /> Invalid
                               </span>
                             ) : row.is_duplicate ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFFBEB] dark:bg-[#78350F]/40 text-[#D97706] dark:text-[#FBBF24] border border-[#FDE68A] dark:border-[#78350F]/50">
                                 <AlertTriangle className="w-3 h-3" /> Duplicate
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ECFDF5] dark:bg-[#064E3B]/40 text-[#059669] dark:text-[#34D399] border border-[#A7F3D0] dark:border-[#047857]/50">
                                 <Check className="w-3 h-3 stroke-[3]" /> Valid
                               </span>
                             )}
                           </td>
-                          <td className="p-3 text-[11px] text-[#64748B]">
+                          <td className="p-3 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
                             {row.errors && row.errors.length > 0 ? (
-                              <span className="text-[#DC2626] font-medium">
+                              <span className="text-[#DC2626] dark:text-[#F87171] font-medium">
                                 {row.errors.join('; ')}
                               </span>
                             ) : row.is_duplicate ? (
-                              <span className="text-[#D97706]">
+                              <span className="text-[#D97706] dark:text-[#FBBF24]">
                                 Record already exists in database
                               </span>
                             ) : (
-                              <span className="text-[#059669]">
+                              <span className="text-[#059669] dark:text-[#34D399]">
                                 Passed all validation rules
                               </span>
                             )}
@@ -1449,7 +1449,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
               {/* Table Pagination */}
               {totalPreviewPages > 1 && (
-                <div className="flex items-center justify-between text-xs text-[#64748B]">
+                <div className="flex items-center justify-between text-xs text-[#64748B] dark:text-[#94A3B8]">
                   <span>
                     Showing {(previewPage - 1) * PREVIEW_PAGE_SIZE + 1} to{' '}
                     {Math.min(previewPage * PREVIEW_PAGE_SIZE, filteredPreviewRows.length)} of{' '}
@@ -1483,48 +1483,48 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
           {/* STEP 5: CONFIRMATION & EXECUTION */}
           {validationResult && !confirmResult && (
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-xs space-y-6">
-              <div className="flex items-center gap-3 border-b border-[#F1F5F9] pb-4">
-                <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] flex items-center justify-center text-xs font-bold shrink-0">
+            <div className="bg-white dark:bg-[#172033] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] p-6 shadow-xs space-y-6">
+              <div className="flex items-center gap-3 border-b border-[#F1F5F9] dark:border-[#334155] pb-4">
+                <span className="w-7 h-7 rounded-lg bg-[#EFF6FF] dark:bg-[#172554] text-[#2563EB] dark:text-[#60A5FA] border border-[#BFDBFE] dark:border-[#1E40AF] flex items-center justify-center text-xs font-bold shrink-0">
                   5
                 </span>
                 <div>
-                  <h2 className="text-sm font-bold text-[#0F172A] m-0">
+                  <h2 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] m-0">
                     Import Confirmation Summary
                   </h2>
-                  <p className="text-[11px] text-[#64748B] m-0">
+                  <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">
                     Review your parameters before executing the bulk import transaction.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-[#F8FAFC] dark:bg-[#111827] rounded-xl border border-[#E2E8F0] dark:border-[#334155] text-xs">
                 <div>
-                  <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">File</div>
-                  <div className="font-bold text-[#0F172A] mt-0.5 truncate">{file?.name}</div>
+                  <div className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">File</div>
+                  <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] mt-0.5 truncate">{file?.name}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Target Pipeline</div>
-                  <div className="font-bold text-[#2563EB] mt-0.5 truncate">
+                  <div className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">Target Pipeline</div>
+                  <div className="font-bold text-[#2563EB] dark:text-[#60A5FA] mt-0.5 truncate">
                     {activeStages.find((s) => s.id === selectedStageId)?.name || 'Cold Calling'}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Source & Priority</div>
-                  <div className="font-bold text-[#0F172A] mt-0.5 truncate">
+                  <div className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">Source & Priority</div>
+                  <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] mt-0.5 truncate">
                     {sourceType} · {priority}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Allocation Target</div>
-                  <div className="font-bold text-[#0F172A] mt-0.5 truncate">
+                  <div className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">Allocation Target</div>
+                  <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] mt-0.5 truncate">
                     {isUnassigned ? 'Unassigned Leads Pool' : `${selectedEmployeeIds.length} Counsellors (Round Robin)`}
                   </div>
                 </div>
               </div>
 
               {importError && (
-                <div className="p-3.5 bg-[#FEF2F2] border border-[#FECACA] rounded-xl text-xs text-[#DC2626] flex items-center gap-2">
+                <div className="p-3.5 bg-[#FEF2F2] dark:bg-[#450A0A]/30 border border-[#FECACA] dark:border-[#991B1B]/40 rounded-xl text-xs text-[#DC2626] dark:text-[#FCA5A5] flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{importError}</span>
                 </div>
@@ -1532,20 +1532,20 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
               {/* Progress UI if running */}
               {isImporting && (
-                <div className="p-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl space-y-3">
+                <div className="p-4 bg-[#EFF6FF] dark:bg-[#172554]/30 border border-[#BFDBFE] dark:border-[#1E40AF]/40 rounded-xl space-y-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#1E3A8A] flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin text-[#2563EB]" />
+                    <span className="font-bold text-[#1E3A8A] dark:text-[#93C5FD] flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-[#2563EB] dark:text-[#60A5FA]" />
                       Importing Leads...
                     </span>
-                    <span className="text-[11px] font-mono text-[#2563EB]">
+                    <span className="text-[11px] font-mono text-[#2563EB] dark:text-[#60A5FA]">
                       Database Transaction in Progress
                     </span>
                   </div>
-                  <div className="w-full bg-white h-2 rounded-full overflow-hidden border border-[#BFDBFE]">
+                  <div className="w-full bg-white dark:bg-[#111827] h-2 rounded-full overflow-hidden border border-[#BFDBFE] dark:border-[#1E40AF]/40">
                     <div className="bg-[#2563EB] h-full w-2/3 animate-pulse rounded-full" />
                   </div>
-                  <div className="text-[11px] text-[#2563EB] font-medium">
+                  <div className="text-[11px] text-[#2563EB] dark:text-[#60A5FA] font-medium">
                     {importProgressStep}
                   </div>
                 </div>
@@ -1589,47 +1589,47 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
           {/* IMPORT SUCCESS / COMPLETION BANNER */}
           {confirmResult && (
-            <div className="bg-white rounded-2xl border border-[#A7F3D0] p-6 shadow-xs space-y-6 animate-in fade-in-50">
+            <div className="bg-white dark:bg-[#172033] rounded-2xl border border-[#A7F3D0] dark:border-[#047857]/40 p-6 shadow-xs space-y-6 animate-in fade-in-50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#059669] shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] dark:bg-[#064E3B]/30 border border-[#A7F3D0] dark:border-[#047857]/40 flex items-center justify-center text-[#059669] dark:text-[#34D399] shrink-0">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-[#059669] m-0">
+                  <h2 className="text-base font-extrabold text-[#059669] dark:text-[#34D399] m-0">
                     Bulk Import Completed Successfully
                   </h2>
-                  <p className="text-xs text-[#64748B] m-0 mt-0.5">
-                    Batch <code className="font-mono text-[#0F172A]">{confirmResult.batch_id}</code> was processed with real-time assignment logging.
+                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8] m-0 mt-0.5">
+                    Batch <code className="font-mono text-[#0F172A] dark:text-[#F8FAFC]">{confirmResult.batch_id}</code> was processed with real-time assignment logging.
                   </p>
                 </div>
               </div>
 
               {/* Result Metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center">
-                  <div className="text-[10px] font-bold text-[#64748B] uppercase">Leads Created</div>
-                  <div className="text-2xl font-extrabold text-[#059669] font-mono mt-1">
+                <div className="p-4 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl text-center">
+                  <div className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase">Leads Created</div>
+                  <div className="text-2xl font-extrabold text-[#059669] dark:text-[#34D399] font-mono mt-1">
                     {confirmResult.imported_count}
                   </div>
                 </div>
 
-                <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center">
-                  <div className="text-[10px] font-bold text-[#64748B] uppercase">Duplicates Skipped</div>
-                  <div className="text-2xl font-extrabold text-[#D97706] font-mono mt-1">
+                <div className="p-4 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl text-center">
+                  <div className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase">Duplicates Skipped</div>
+                  <div className="text-2xl font-extrabold text-[#D97706] dark:text-[#FBBF24] font-mono mt-1">
                     {confirmResult.duplicate_count}
                   </div>
                 </div>
 
-                <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center">
-                  <div className="text-[10px] font-bold text-[#64748B] uppercase">Rejected / Failed</div>
-                  <div className="text-2xl font-extrabold text-[#DC2626] font-mono mt-1">
+                <div className="p-4 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl text-center">
+                  <div className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase">Rejected / Failed</div>
+                  <div className="text-2xl font-extrabold text-[#DC2626] dark:text-[#F87171] font-mono mt-1">
                     {confirmResult.rejected_count}
                   </div>
                 </div>
 
-                <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center">
-                  <div className="text-[10px] font-bold text-[#64748B] uppercase">Pipeline Stage</div>
-                  <div className="text-sm font-extrabold text-[#2563EB] mt-2 truncate">
+                <div className="p-4 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl text-center">
+                  <div className="text-[10px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase">Pipeline Stage</div>
+                  <div className="text-sm font-extrabold text-[#2563EB] dark:text-[#60A5FA] mt-2 truncate">
                     {confirmResult.stage_name}
                   </div>
                 </div>
@@ -1651,7 +1651,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     onClick={() => setActiveTab('history')}
                     className="crm-btn-secondary px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Eye className="w-3.5 h-3.5 text-[#64748B]" />
+                    <Eye className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
                     <span>View in History</span>
                   </button>
 
@@ -1674,13 +1674,13 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
       {/* TAB 2: IMPORT HISTORY & AUDIT LOGS */}
       {/* ======================================================== */}
       {activeTab === 'history' && (
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F1F5F9] pb-4">
+        <div className="bg-white dark:bg-[#172033] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] p-6 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F1F5F9] dark:border-[#334155] pb-4">
             <div>
-              <h2 className="text-sm font-bold text-[#0F172A] m-0">
+              <h2 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] m-0">
                 Import Batch History & Audits
               </h2>
-              <p className="text-[11px] text-[#64748B] m-0">
+              <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">
                 Review past file imports, round-robin assignments, and download rejected row records.
               </p>
             </div>
@@ -1691,7 +1691,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
                 placeholder="Search batches by ID or file..."
-                className="h-8 px-3 bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB] w-56"
+                className="h-8 px-3 bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] w-56 placeholder-[#94A3B8] dark:placeholder-[#64748B]"
               />
 
               <button
@@ -1707,22 +1707,22 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
           </div>
 
           {loadingHistory ? (
-            <div className="p-8 text-center text-xs text-[#64748B] space-y-2">
-              <RefreshCw className="w-6 h-6 mx-auto animate-spin text-[#2563EB]" />
+            <div className="p-8 text-center text-xs text-[#64748B] dark:text-[#94A3B8] space-y-2">
+              <RefreshCw className="w-6 h-6 mx-auto animate-spin text-[#2563EB] dark:text-[#60A5FA]" />
               <p>Loading import batches...</p>
             </div>
           ) : filteredBatches.length === 0 ? (
-            <div className="p-8 text-center text-xs text-[#64748B] space-y-2">
-              <FileSpreadsheet className="w-8 h-8 mx-auto text-[#94A3B8]" />
-              <p className="font-semibold text-[#0F172A]">No import batches recorded yet</p>
-              <p className="text-[11px] text-[#94A3B8]">
+            <div className="p-8 text-center text-xs text-[#64748B] dark:text-[#94A3B8] space-y-2">
+              <FileSpreadsheet className="w-8 h-8 mx-auto text-[#94A3B8] dark:text-[#64748B]" />
+              <p className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">No import batches recorded yet</p>
+              <p className="text-[11px] text-[#94A3B8] dark:text-[#64748B]">
                 Imports initiated by authorized team members will be tracked here with full audit history.
               </p>
             </div>
           ) : (
-            <div className="border border-[#E2E8F0] rounded-xl overflow-x-auto">
+            <div className="border border-[#E2E8F0] dark:border-[#334155] rounded-xl overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#64748B] font-semibold text-[11px] uppercase tracking-wider">
+                <thead className="bg-[#F8FAFC] dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#334155] text-[#64748B] dark:text-[#94A3B8] font-semibold text-[11px] uppercase tracking-wider">
                   <tr>
                     <th className="p-3">Batch ID</th>
                     <th className="p-3">File Name</th>
@@ -1737,17 +1737,17 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                     <th className="p-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#F1F5F9]">
+                <tbody className="divide-y divide-[#F1F5F9] dark:divide-[#334155]">
                   {filteredBatches.map((batch) => (
-                    <tr key={batch.id} className="hover:bg-[#F8FAFC]">
-                      <td className="p-3 font-mono font-semibold text-[#2563EB]">
+                    <tr key={batch.id} className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/60 transition-colors">
+                      <td className="p-3 font-mono font-semibold text-[#2563EB] dark:text-[#60A5FA]">
                         {batch.batch_id}
                       </td>
-                      <td className="p-3 font-medium text-[#0F172A] max-w-[150px] truncate" title={batch.file_name}>
+                      <td className="p-3 font-medium text-[#0F172A] dark:text-[#F8FAFC] max-w-[150px] truncate" title={batch.file_name}>
                         {batch.file_name}
                       </td>
-                      <td className="p-3 text-[#475569]">{batch.created_by_name}</td>
-                      <td className="p-3 text-[#64748B] whitespace-nowrap">
+                      <td className="p-3 text-[#475569] dark:text-[#CBD5E1]">{batch.created_by_name}</td>
+                      <td className="p-3 text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
                         {new Date(batch.created_at).toLocaleString([], {
                           month: 'short',
                           day: 'numeric',
@@ -1760,24 +1760,24 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                           {batch.stage_name}
                         </span>
                       </td>
-                      <td className="p-3 font-mono text-[#0F172A] font-bold">{batch.total_rows}</td>
-                      <td className="p-3 font-mono text-[#059669] font-bold">
+                      <td className="p-3 font-mono text-[#0F172A] dark:text-[#F8FAFC] font-bold">{batch.total_rows}</td>
+                      <td className="p-3 font-mono text-[#059669] dark:text-[#34D399] font-bold">
                         {batch.imported_count}
                       </td>
-                      <td className="p-3 font-mono text-[#D97706] font-bold">
+                      <td className="p-3 font-mono text-[#D97706] dark:text-[#FBBF24] font-bold">
                         {batch.duplicate_count}
                       </td>
-                      <td className="p-3 font-mono text-[#DC2626] font-bold">
+                      <td className="p-3 font-mono text-[#DC2626] dark:text-[#F87171] font-bold">
                         {batch.rejected_count}
                       </td>
                       <td className="p-3">
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                             batch.status === 'COMPLETED'
-                              ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
+                              ? 'bg-[#ECFDF5] dark:bg-[#064E3B]/40 text-[#059669] dark:text-[#34D399] border border-[#A7F3D0] dark:border-[#047857]/50'
                               : batch.status === 'COMPLETED_WITH_ERRORS'
-                              ? 'bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]'
-                              : 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]'
+                              ? 'bg-[#FFFBEB] dark:bg-[#78350F]/40 text-[#D97706] dark:text-[#FBBF24] border border-[#FDE68A] dark:border-[#78350F]/50'
+                              : 'bg-[#FEF2F2] dark:bg-[#450A0A]/40 text-[#DC2626] dark:text-[#F87171] border border-[#FECACA] dark:border-[#991B1B]/40'
                           }`}
                         >
                           {batch.status.replace(/_/g, ' ')}
@@ -1788,7 +1788,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                           <button
                             type="button"
                             onClick={() => setSelectedBatchDetails(batch)}
-                            className="p-1.5 text-[#64748B] hover:text-[#2563EB] hover:bg-[#EFF6FF] rounded-md transition"
+                            className="p-1.5 text-[#64748B] dark:text-[#94A3B8] hover:text-[#2563EB] dark:hover:text-[#60A5FA] hover:bg-[#EFF6FF] dark:hover:bg-[#172554]/40 rounded-md transition"
                             title="View Batch Details & Allocation Breakdown"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -1798,7 +1798,7 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                             <button
                               type="button"
                               onClick={() => api.downloadBatchRejectedRows(batch.id)}
-                              className="p-1.5 text-[#64748B] hover:text-[#DC2626] hover:bg-[#FEF2F2] rounded-md transition"
+                              className="p-1.5 text-[#64748B] dark:text-[#94A3B8] hover:text-[#DC2626] dark:hover:text-[#F87171] hover:bg-[#FEF2F2] dark:hover:bg-[#450A0A]/40 rounded-md transition"
                               title="Download Rejected Rows CSV"
                             >
                               <Download className="w-3.5 h-3.5" />
@@ -1817,16 +1817,16 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
 
       {/* BATCH DETAILS MODAL */}
       {selectedBatchDetails && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xl max-w-xl w-full p-6 space-y-5 animate-in fade-in-50">
-            <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="crm-card bg-white dark:bg-[#172033] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] shadow-2xl max-w-xl w-full p-6 space-y-5 animate-in fade-in-50">
+            <div className="flex items-center justify-between border-b border-[#F1F5F9] dark:border-[#334155] pb-3">
               <div className="flex items-center gap-2.5">
-                <FileSpreadsheet className="w-5 h-5 text-[#2563EB]" />
+                <FileSpreadsheet className="w-5 h-5 text-[#2563EB] dark:text-[#60A5FA]" />
                 <div>
-                  <h3 className="text-sm font-bold text-[#0F172A] m-0">
+                  <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] m-0">
                     Import Batch: {selectedBatchDetails.batch_id}
                   </h3>
-                  <p className="text-[11px] text-[#64748B] m-0">
+                  <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">
                     {selectedBatchDetails.file_name} · Processed on{' '}
                     {new Date(selectedBatchDetails.created_at).toLocaleString()}
                   </p>
@@ -1835,24 +1835,24 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedBatchDetails(null)}
-                className="text-[#64748B] hover:text-[#0F172A] p-1 rounded-md"
+                className="text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] p-1 rounded-md"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {selectedBatchDetails.batch_note && (
-              <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs space-y-1">
-                <div className="font-semibold text-[#64748B] text-[10px] uppercase">
+              <div className="p-3 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl text-xs space-y-1">
+                <div className="font-semibold text-[#64748B] dark:text-[#94A3B8] text-[10px] uppercase">
                   Batch Tag / Note
                 </div>
-                <div className="font-medium text-[#0F172A]">{selectedBatchDetails.batch_note}</div>
+                <div className="font-medium text-[#0F172A] dark:text-[#F8FAFC]">{selectedBatchDetails.batch_note}</div>
               </div>
             )}
 
             {/* Distribution Summary */}
             <div className="space-y-2">
-              <div className="text-xs font-bold text-[#0F172A]">
+              <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                 Employee Allocation Summary:
               </div>
               {selectedBatchDetails.distribution_summary &&
@@ -1861,15 +1861,15 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
                   {Object.entries(selectedBatchDetails.distribution_summary).map(([name, count]) => (
                     <div
                       key={name}
-                      className="p-2.5 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg flex items-center justify-between text-xs"
+                      className="p-2.5 bg-[#EFF6FF] dark:bg-[#172554]/40 border border-[#BFDBFE] dark:border-[#1E40AF]/40 rounded-lg flex items-center justify-between text-xs"
                     >
-                      <span className="font-medium text-[#1E3A8A] truncate">{name}</span>
-                      <span className="font-extrabold font-mono text-[#2563EB]">{count}</span>
+                      <span className="font-medium text-[#1E3A8A] dark:text-[#93C5FD] truncate">{name}</span>
+                      <span className="font-extrabold font-mono text-[#2563EB] dark:text-[#60A5FA]">{count}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-xs text-[#64748B] italic">
+                <div className="text-xs text-[#64748B] dark:text-[#94A3B8] italic">
                   {selectedBatchDetails.assignment_mode === 'UNASSIGNED'
                     ? 'Imported directly into Unassigned Leads pool.'
                     : 'No individual allocation details stored.'}
@@ -1880,12 +1880,12 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
             {/* Error Summary */}
             {selectedBatchDetails.errors_summary && selectedBatchDetails.errors_summary.length > 0 && (
               <div className="space-y-2">
-                <div className="text-xs font-bold text-[#DC2626]">
+                <div className="text-xs font-bold text-[#DC2626] dark:text-[#F87171]">
                   Errors / Rejections ({selectedBatchDetails.errors_summary.length}):
                 </div>
-                <div className="max-h-36 overflow-y-auto space-y-1.5 p-2 bg-[#FEF2F2] border border-[#FECACA] rounded-lg text-xs">
+                <div className="max-h-36 overflow-y-auto space-y-1.5 p-2 bg-[#FEF2F2] dark:bg-[#450A0A]/30 border border-[#FECACA] dark:border-[#991B1B]/40 rounded-lg text-xs">
                   {selectedBatchDetails.errors_summary.map((err, idx) => (
-                    <div key={idx} className="text-[#DC2626]">
+                    <div key={idx} className="text-[#DC2626] dark:text-[#FCA5A5]">
                       Row {err.row_number}: {err.error}
                     </div>
                   ))}
@@ -1893,12 +1893,12 @@ export const BulkImportPage: React.FC<BulkImportPageProps> = ({
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9]">
+            <div className="flex items-center justify-between pt-2 border-t border-[#F1F5F9] dark:border-[#334155]">
               {selectedBatchDetails.rejected_count > 0 ? (
                 <button
                   type="button"
                   onClick={() => api.downloadBatchRejectedRows(selectedBatchDetails.id)}
-                  className="crm-btn-secondary px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 text-[#DC2626]"
+                  className="crm-btn-secondary px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 text-[#DC2626] dark:text-[#F87171]"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download Rejected Rows CSV</span>

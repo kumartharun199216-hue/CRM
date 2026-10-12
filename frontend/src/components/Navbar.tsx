@@ -62,28 +62,28 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="bg-slate-900/90 border-b border-slate-800 backdrop-blur sticky top-0 z-30 px-4 py-3">
+    <header className="bg-white/95 dark:bg-[#111827]/90 border-b border-[#E2E8F0] dark:border-slate-800 backdrop-blur sticky top-0 z-30 px-4 py-3">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
         {/* Logo and App Title */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#2563EB] to-[#7C3AED] flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
             CRM
           </div>
           <div>
-            <h1 className="text-base font-bold text-slate-100 tracking-tight m-0">Sales CRM</h1>
-            <p className="text-xs text-slate-400 m-0">Pipeline & Lead Operations</p>
+            <h1 className="text-base font-bold text-[#0F172A] dark:text-slate-100 tracking-tight m-0">Sales CRM</h1>
+            <p className="text-xs text-[#64748B] dark:text-slate-400 m-0">Pipeline & Lead Operations</p>
           </div>
         </div>
 
         {/* View Switcher: Spreadsheet vs Kanban */}
-        <div className="flex items-center bg-slate-800/80 p-1 rounded-lg border border-slate-700/60">
+        <div className="flex items-center bg-[#F1F5F9] dark:bg-slate-800/80 p-1 rounded-lg border border-[#E2E8F0] dark:border-slate-700/60">
           <button
             type="button"
             onClick={() => onViewChange('spreadsheet')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
               activeView === 'spreadsheet'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#2563EB] text-white shadow-xs'
+                : 'text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-200'
             }`}
           >
             <Table2 className="w-3.5 h-3.5" />
@@ -94,8 +94,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onViewChange('kanban')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
               activeView === 'kanban'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#2563EB] text-white shadow-xs'
+                : 'text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-200'
             }`}
           >
             <Kanban className="w-3.5 h-3.5" />
@@ -109,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={onOpenCreateLead}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#2563EB] hover:bg-blue-600 text-white transition shadow-xs cursor-pointer"
             >
               <PlusCircle className="w-3.5 h-3.5" />
               New Lead
@@ -120,10 +120,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={onOpenTemplates}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              className="crm-btn-secondary flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer"
               title="Communication Templates"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-slate-400" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-[#64748B] dark:text-slate-400" />
               Templates
             </button>
           )}
@@ -133,34 +133,34 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenReports}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                className="crm-btn-secondary flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer"
                 title="Configure Scheduled Reports"
               >
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                <Clock className="w-3.5 h-3.5 text-[#64748B] dark:text-slate-400" />
                 Reports
               </button>
               <button
                 type="button"
                 onClick={onOpenStages}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                className="crm-btn-secondary flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer"
                 title="Configure Pipeline Stages"
               >
-                <Settings2 className="w-3.5 h-3.5 text-slate-400" />
+                <Settings2 className="w-3.5 h-3.5 text-[#64748B] dark:text-slate-400" />
                 Stages
               </button>
             </>
           )}
 
           {/* User profile & Logout */}
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+          <div className="flex items-center gap-2 pl-2 border-l border-[#E2E8F0] dark:border-slate-800">
             <div className="flex flex-col items-end">
-              <span className="text-xs font-medium text-slate-200">{user.username}</span>
+              <span className="text-xs font-medium text-[#0F172A] dark:text-slate-200">{user.username}</span>
               {getRoleBadge()}
             </div>
             <button
               type="button"
               onClick={onLogout}
-              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition"
+              className="p-1.5 text-[#64748B] dark:text-slate-400 hover:text-red-500 hover:bg-[#F1F5F9] dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />

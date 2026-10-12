@@ -41,8 +41,6 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   const [experience, setExperience] = useState('');
   const [priority, setPriority] = useState('');
   const [leadStatus, setLeadStatus] = useState('');
-  const [estimatedRevenue, setEstimatedRevenue] = useState<string>('');
-  const [placementFee, setPlacementFee] = useState<string>('');
   const [careerCounsellor, setCareerCounsellor] = useState('');
   const [city, setCity] = useState('');
   const [nextFollowUp, setNextFollowUp] = useState('');
@@ -68,8 +66,6 @@ export const LeadModal: React.FC<LeadModalProps> = ({
       setExperience(lead.experience || '');
       setPriority(lead.priority || '');
       setLeadStatus(lead.status || '');
-      setEstimatedRevenue(lead.estimated_revenue !== null && lead.estimated_revenue !== undefined ? String(lead.estimated_revenue) : '');
-      setPlacementFee(lead.placement_fee !== null && lead.placement_fee !== undefined ? String(lead.placement_fee) : '');
       setCareerCounsellor(lead.career_counsellor || '');
       setCity(lead.city || '');
       setNextFollowUp(lead.next_follow_up ? lead.next_follow_up.substring(0, 16) : '');
@@ -88,8 +84,6 @@ export const LeadModal: React.FC<LeadModalProps> = ({
       setExperience('');
       setPriority('');
       setLeadStatus('');
-      setEstimatedRevenue('');
-      setPlacementFee('');
       setCareerCounsellor('');
       setCity('');
       setNextFollowUp('');
@@ -175,14 +169,17 @@ export const LeadModal: React.FC<LeadModalProps> = ({
         experience: experience.trim(),
         priority: priority.trim(),
         status: leadStatus.trim(),
-        estimated_revenue: estimatedRevenue ? parseFloat(estimatedRevenue) : null,
-        placement_fee: placementFee ? parseFloat(placementFee) : null,
         career_counsellor: careerCounsellor.trim(),
         city: city.trim(),
         next_follow_up: nextFollowUp ? new Date(nextFollowUp).toISOString() : null,
         team: selectedTeamId as number,
         assigned_employee: assignedEmployeeId as number,
         stage: selectedStageId,
+        // Preserve existing financial fields on edit without requesting them from user
+        ...(isEditing && lead ? {
+          estimated_revenue: lead.estimated_revenue,
+          placement_fee: lead.placement_fee,
+        } : {}),
       });
       onClose();
     } catch (err: unknown) {
@@ -193,13 +190,13 @@ export const LeadModal: React.FC<LeadModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
-      <div className="crm-card bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] relative">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
+      <div className="crm-card bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] relative">
         {/* Header */}
-        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+        <div className="p-4 border-b border-[#E2E8F0] dark:border-[#334155] flex items-center justify-between bg-[#F8FAFC] dark:bg-[#111827]">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-[#0F172A]">
+              <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                 {isEditing ? `Edit Lead — ${lead.lead_id || `#${lead.id}`}` : 'Create New Lead'}
               </h3>
               {isEditing && (
@@ -208,7 +205,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#64748B] mt-0.5">
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
               {isEditing
                 ? 'Update student fields, pipeline stage and team assignment'
                 : 'Register a new student lead. Lead ID is automatically generated (e.g. SM-LD-0001).'}
@@ -217,7 +214,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#EFF6FF] rounded-lg transition cursor-pointer"
+            className="p-1.5 text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#EFF6FF] dark:hover:bg-[#1E293B] rounded-lg transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -226,31 +223,31 @@ export const LeadModal: React.FC<LeadModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 flex-1 overflow-y-auto scrollbar-thin">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-xs text-[#DC2626]">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#DC2626]" />
+            <div className="p-3 bg-red-50 dark:bg-rose-950/30 border border-red-200 dark:border-rose-900/50 rounded-xl flex items-start gap-2 text-xs text-[#DC2626] dark:text-rose-400">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#DC2626] dark:text-rose-400" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Lead ID Read-Only Indicator */}
-          <div className="p-2.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-between text-xs text-[#1E3A8A]">
+          <div className="p-2.5 rounded-xl bg-[#EFF6FF] dark:bg-blue-950/30 border border-[#BFDBFE] dark:border-blue-900/50 flex items-center justify-between text-xs text-[#1E3A8A] dark:text-blue-300">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#2563EB]" />
+              <ShieldCheck className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
               <span>
-                Lead ID: <strong className="font-mono text-[#0F172A]">{isEditing ? lead.lead_id || `#${lead.id}` : 'Auto-generated (e.g. SM-LD-0001)'}</strong>
+                Lead ID: <strong className="font-mono text-[#0F172A] dark:text-[#F8FAFC]">{isEditing ? lead.lead_id || `#${lead.id}` : 'Auto-generated (e.g. SM-LD-0001)'}</strong>
               </span>
             </div>
-            <span className="text-[11px] text-[#64748B] italic">Managed automatically by database sequence</span>
+            <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8] italic">Managed automatically by database sequence</span>
           </div>
 
           {/* Section: Mandatory Student Fields */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-[#1E3A8A] uppercase tracking-wider">
+            <h4 className="text-xs font-semibold text-[#1E3A8A] dark:text-blue-400 uppercase tracking-wider">
               Mandatory Student Information
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1">
                   Lead Name <span className="text-[#DC2626]">*</span>
                 </label>
                 <input
@@ -259,11 +256,11 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Alex Johnson"
                   required
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1">
                   Email <span className="text-[#DC2626]">*</span>
                 </label>
                 <input
@@ -272,11 +269,11 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="student@example.com"
                   required
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1">
                   Mobile Phone <span className="text-[#DC2626]">*</span>
                 </label>
                 <input
@@ -285,108 +282,108 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 555-123-4567"
                   required
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
                 />
               </div>
             </div>
           </div>
 
           {/* Section: Academic & Qualification Details (Optional) */}
-          <div className="space-y-3 pt-3 border-t border-[#E2E8F0]">
-            <h4 className="text-xs font-semibold text-[#1E3A8A] uppercase tracking-wider flex items-center justify-between">
+          <div className="space-y-3 pt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
+            <h4 className="text-xs font-semibold text-[#1E3A8A] dark:text-blue-400 uppercase tracking-wider flex items-center justify-between">
               <span>Academic & Qualifications (Optional)</span>
-              <span className="text-[11px] font-normal text-[#64748B] lowercase">can remain empty</span>
+              <span className="text-[11px] font-normal text-[#64748B] dark:text-[#94A3B8] lowercase">can remain empty</span>
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Degree / Qualification</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">Degree / Qualification</label>
                 <input
                   type="text"
                   value={qualification}
                   onChange={(e) => setQualification(e.target.value)}
                   placeholder="B.Tech Computer Science"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">College / University</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">College / University</label>
                 <input
                   type="text"
                   value={college}
                   onChange={(e) => setCollege(e.target.value)}
                   placeholder="State University"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 transition"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Year of Passing (YOP)</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">Year of Passing (YOP)</label>
                 <input
                   type="text"
                   value={yop}
                   onChange={(e) => setYop(e.target.value)}
                   placeholder="2025"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] font-mono transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] font-mono transition"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Target Role</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">Target Role</label>
                 <input
                   type="text"
                   value={targetRole}
                   onChange={(e) => setTargetRole(e.target.value)}
                   placeholder="Software Engineer"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Experience</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">Experience</label>
                 <input
                   type="text"
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
                   placeholder="Fresher / 1-2 years"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">City / Location</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">City / Location</label>
                 <input
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Bangalore, India"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#64748B] mb-1">Key Skills</label>
+              <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">Key Skills</label>
               <textarea
                 value={keySkills}
                 onChange={(e) => setKeySkills(e.target.value)}
                 placeholder="Python, React, Django, SQL..."
                 rows={2}
-                className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
+                className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
               />
             </div>
           </div>
 
-          {/* Section: Pipeline & Financials (Optional) */}
-          <div className="space-y-3 pt-3 border-t border-[#E2E8F0]">
-            <h4 className="text-xs font-semibold text-[#1E3A8A] uppercase tracking-wider">
-              Status & Financials
+          {/* Section: Status & Follow-up */}
+          <div className="space-y-3 pt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
+            <h4 className="text-xs font-semibold text-[#1E3A8A] dark:text-blue-400 uppercase tracking-wider">
+              Status & Priority
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Priority</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">Priority</label>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] focus:outline-none focus:border-[#2563EB] transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] transition"
                 >
                   <option value="">None</option>
                   <option value="Low">Low</option>
@@ -396,71 +393,49 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Status</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">Status</label>
                 <input
                   type="text"
                   value={leadStatus}
                   onChange={(e) => setLeadStatus(e.target.value)}
                   placeholder="e.g. Active, Pending"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Estimated Revenue (₹)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={estimatedRevenue}
-                  onChange={(e) => setEstimatedRevenue(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] font-mono transition"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Placement Fee (₹)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={placementFee}
-                  onChange={(e) => setPlacementFee(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] font-mono transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Career Counsellor</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">Career Counsellor</label>
                 <input
                   type="text"
                   value={careerCounsellor}
                   onChange={(e) => setCareerCounsellor(e.target.value)}
                   placeholder="Counsellor Name"
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748B] mb-1">Next Follow-up</label>
+                <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-1">Next Follow-up</label>
                 <input
                   type="datetime-local"
                   value={nextFollowUp}
                   onChange={(e) => setNextFollowUp(e.target.value)}
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] focus:outline-none focus:border-[#2563EB] transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] transition"
                 />
               </div>
             </div>
           </div>
 
           {/* Section: Ownership & Pipeline Stage */}
-          <div className="space-y-3 pt-3 border-t border-[#E2E8F0]">
-            <h4 className="text-xs font-semibold text-[#1E3A8A] uppercase tracking-wider">
+          <div className="space-y-3 pt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
+            <h4 className="text-xs font-semibold text-[#1E3A8A] dark:text-blue-400 uppercase tracking-wider">
               CRM Ownership & Pipeline Stage
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Team */}
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1">
                   Team <span className="text-[#DC2626]">*</span>
                 </label>
                 {canChangeTeam ? (
@@ -472,7 +447,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                       setAssignedEmployeeId('');
                     }}
                     required
-                    className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] focus:outline-none focus:border-[#2563EB] transition"
+                    className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] transition"
                   >
                     <option value="">Select Team</option>
                     {teams.map((t) => (
@@ -482,7 +457,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                     ))}
                   </select>
                 ) : (
-                  <div className="text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#64748B]">
+                  <div className="text-xs bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#64748B] dark:text-[#94A3B8]">
                     {lead?.team_name || teams.find((t) => t.id === selectedTeamId)?.name || 'Authorized Team'}
                   </div>
                 )}
@@ -490,7 +465,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
 
               {/* Assigned Sales Employee */}
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1">
                   Assigned Sales Employee <span className="text-[#DC2626]">*</span>
                 </label>
                 {canReassignEmployee ? (
@@ -498,7 +473,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                     value={assignedEmployeeId}
                     onChange={(e) => setAssignedEmployeeId(Number(e.target.value))}
                     required
-                    className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] focus:outline-none focus:border-[#2563EB] transition"
+                    className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] transition"
                   >
                     <option value="">Select Sales Employee</option>
                     {availableEmployees.map((emp) => (
@@ -508,8 +483,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                     ))}
                   </select>
                 ) : (
-                  <div className="text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] flex items-center gap-1.5">
-                    <UserCheck className="w-3.5 h-3.5 text-[#2563EB]" />
+                  <div className="text-xs bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />
                     {lead?.assigned_employee_name || users.find((u) => u.id === assignedEmployeeId)?.full_name || users.find((u) => u.id === assignedEmployeeId)?.username || 'Assigned'}
                   </div>
                 )}
@@ -522,7 +497,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
 
               {/* Pipeline Stage */}
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1">
                   Pipeline Stage
                 </label>
                 <select
@@ -530,7 +505,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                   onChange={(e) =>
                     setSelectedStageId(e.target.value === '' ? null : Number(e.target.value))
                   }
-                  className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-2 text-[#0F172A] focus:outline-none focus:border-[#2563EB] transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] transition"
                 >
                   <option value="">Unassigned Stage</option>
                   {stages.map((st) => (
@@ -544,11 +519,11 @@ export const LeadModal: React.FC<LeadModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-end gap-2">
+          <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#334155] flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="crm-btn-secondary px-3.5 py-2 rounded-xl text-xs font-medium text-[#0F172A] cursor-pointer"
+              className="crm-btn-secondary px-3.5 py-2 rounded-xl text-xs font-medium cursor-pointer"
             >
               Cancel
             </button>

@@ -104,3 +104,59 @@ class CanAccessLead(permissions.BasePermission):
 
         return False
 
+class CanManageTemplate(permissions.BasePermission):
+    """
+    Template management rules:
+    - Admins: Manage all templates across the organization.
+    - Managers: Manage templates of their own team or created by themselves.
+    - Sales Employees: Cannot create, edit, delete, activate, or deactivate templates.
+    """
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+        if getattr(request.user, 'must_change_password', False):
+            return False
+        return bool(request.user.role in ['ADMIN', 'MANAGER'] or request.user.is_superuser)
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if user.is_superuser or user.role == 'ADMIN':
+            return True
+        if user.role == 'MANAGER':
+            manager_team = getattr(user, 'managed_team', None) or user.team
+            if obj.team and manager_team and obj.team_id == manager_team.id:
+                return True
+            if obj.created_by_id == user.id:
+                return True
+            return False
+        return False
+
+class CanViewTemplate(permissions.BasePermission):
+    """
+    Template visibility rules:
+    - Admins: Can view all templates.
+    - Managers: Can view organization-wide templates and own team's templates.
+    - Sales Employees: Can view active organization-wide templates and active own team templates.
+    """
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+        if getattr(request.user, 'must_change_password', False):
+            return False
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if user.is_superuser or user.role == 'ADMIN':
+            return True
+        user_team = getattr(user, 'managed_team', None) or user.team
+        user_team_id = user_team.id if user_team else None
+
+        if user.role == 'MANAGER':
+            return bool(obj.team_id is None or obj.team_id == user_team_id or obj.created_by_id == user.id)
+        elif user.role == 'SALES_EMPLOYEE':
+            if not obj.is_active:
+                return False
+            return bool(obj.team_id is None or obj.team_id == user_team_id)
+        return False
+

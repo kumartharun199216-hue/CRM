@@ -102,25 +102,25 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
       : 'Career Counsellor';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center items-center p-4 sm:p-6 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] flex flex-col justify-center items-center p-4 sm:p-6 font-sans">
       <div className="w-full max-w-lg space-y-5 animate-in fade-in zoom-in-95 duration-200">
         {/* CRM Branding */}
         <div className="text-center space-y-2">
           <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-[#2563EB] to-[#7C3AED] flex items-center justify-center text-white mx-auto shadow-md">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-black text-[#0F172A] tracking-tight">
+          <h1 className="text-2xl font-black text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
             Skill Move Sales CRM
           </h1>
-          <p className="text-xs text-[#64748B] font-medium">
+          <p className="text-xs text-[#64748B] dark:text-[#94A3B8] font-medium">
             Enterprise Admissions & Counsellor Management Platform
           </p>
         </div>
 
         {/* Main Card */}
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xl overflow-hidden">
+        <div className="bg-white dark:bg-[#172033] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] shadow-xl overflow-hidden">
           {/* Header Banner */}
-          <div className="px-6 py-5 border-b border-[#E2E8F0] bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white flex items-center justify-between">
+          <div className="px-6 py-5 border-b border-[#E2E8F0] dark:border-[#334155] bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white dark:from-[#111827] dark:via-[#172033] dark:to-[#172033] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl text-white flex items-center justify-center shadow-xs ${
                 user.must_change_password ? 'bg-amber-500' : 'bg-[#2563EB]'
@@ -128,17 +128,17 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 <KeyRound className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-[#0F172A]">
+                <h2 className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                   {user.must_change_password ? 'Change Temporary Password' : 'Change Your Password'}
                 </h2>
-                <p className="text-xs text-[#64748B]">
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
                   {user.must_change_password ? 'First-login security requirement' : 'Secure your account credentials'}
                 </p>
               </div>
             </div>
             {user.must_change_password ? (
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold">
-                <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[11px] font-semibold">
+                <ShieldAlert className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                 <span>Action Required</span>
               </div>
             ) : onCancel ? (
@@ -146,7 +146,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 type="button"
                 id="cancel-change-password-btn"
                 onClick={onCancel}
-                className="text-xs font-semibold text-[#64748B] hover:text-[#0F172A] bg-white border border-[#CBD5E1] px-3 py-1.5 rounded-lg transition shadow-2xs cursor-pointer"
+                className="text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-white bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] px-3 py-1.5 rounded-lg transition shadow-2xs cursor-pointer"
               >
                 Back to CRM
               </button>
@@ -156,10 +156,10 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
           <div className="p-6 space-y-5">
             {/* Warning / Notice Banner */}
             {user.must_change_password ? (
-              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs flex items-start gap-2.5">
-                <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl text-amber-900 dark:text-amber-300 text-xs flex items-start gap-2.5">
+                <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <span className="font-bold text-amber-950">
+                  <span className="font-bold text-amber-950 dark:text-amber-200">
                     Password Change Required on First Login:
                   </span>{' '}
                   <span>
@@ -168,10 +168,10 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="p-3.5 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl text-[#1E3A8A] text-xs flex items-start gap-2.5">
-                <Lock className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5" />
+              <div className="p-3.5 bg-[#EFF6FF] dark:bg-blue-950/30 border border-[#BFDBFE] dark:border-blue-900/50 rounded-xl text-[#1E3A8A] dark:text-blue-300 text-xs flex items-start gap-2.5">
+                <Lock className="w-4 h-4 text-[#2563EB] dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <span className="font-bold text-[#1E3A8A]">
+                  <span className="font-bold text-[#1E3A8A] dark:text-blue-200">
                     Account Security & Session Management:
                   </span>{' '}
                   <span>
@@ -182,25 +182,25 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
             )}
 
             {/* Employee Profile Preview Chip */}
-            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
                   Logged in as
                 </p>
-                <p className="font-bold text-[#0F172A] mt-0.5">
+                <p className="font-bold text-[#0F172A] dark:text-[#F8FAFC] mt-0.5">
                   {user.full_name || user.username}
                 </p>
-                <p className="text-[11px] text-[#64748B]">{user.email}</p>
+                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">{user.email}</p>
               </div>
               <div className="text-right">
                 {user.employee_id && (
-                  <span className="inline-block font-mono text-[11px] font-bold text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded border border-blue-100 mb-1">
+                  <span className="inline-block font-mono text-[11px] font-bold text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 rounded border border-blue-100 dark:border-blue-900 mb-1">
                     {user.employee_id}
                   </span>
                 )}
-                <p className="text-[11px] font-semibold text-[#475569]">{roleLabel}</p>
+                <p className="text-[11px] font-semibold text-[#475569] dark:text-[#CBD5E1]">{roleLabel}</p>
                 {user.team_name && (
-                  <p className="text-[10px] text-[#64748B]">{user.team_name}</p>
+                  <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">{user.team_name}</p>
                 )}
               </div>
             </div>
@@ -209,9 +209,9 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
             {error && (
               <div
                 id="change-password-error"
-                className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-[#DC2626] flex items-center gap-2 animate-in fade-in"
+                className="p-3 bg-red-50 dark:bg-rose-950/30 border border-red-200 dark:border-rose-900/50 rounded-xl text-xs text-[#DC2626] dark:text-rose-400 flex items-center gap-2 animate-in fade-in"
               >
-                <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" />
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626] dark:text-rose-400" />
                 <span className="font-medium">{error}</span>
               </div>
             )}
@@ -222,7 +222,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
               <div>
                 <label
                   htmlFor="current-password-input"
-                  className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                  className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1.5"
                 >
                   Temporary / Current Password <span className="text-rose-500">*</span>
                 </label>
@@ -234,13 +234,13 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     required
                     placeholder="Enter your temporary password"
-                    className="w-full text-xs bg-white border border-[#CBD5E1] rounded-xl pl-3.5 pr-10 py-2.5 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition"
+                    className="w-full text-xs bg-white dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-xl pl-3.5 pr-10 py-2.5 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#64748B] hover:text-[#0F172A] transition cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] transition cursor-pointer"
                   >
                     {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -251,7 +251,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
               <div>
                 <label
                   htmlFor="new-password-input"
-                  className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                  className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1.5"
                 >
                   New Permanent Password <span className="text-rose-500">*</span>
                 </label>
@@ -263,13 +263,13 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     placeholder="At least 8 characters (letters, numbers, symbols)"
-                    className="w-full text-xs bg-white border border-[#CBD5E1] rounded-xl pl-3.5 pr-10 py-2.5 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition"
+                    className="w-full text-xs bg-white dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-xl pl-3.5 pr-10 py-2.5 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                     aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#64748B] hover:text-[#0F172A] transition cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] transition cursor-pointer"
                   >
                     {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -280,7 +280,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
               <div>
                 <label
                   htmlFor="confirm-password-input"
-                  className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                  className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1.5"
                 >
                   Confirm New Password <span className="text-rose-500">*</span>
                 </label>
@@ -292,13 +292,13 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     placeholder="Re-enter your new permanent password"
-                    className="w-full text-xs bg-white border border-[#CBD5E1] rounded-xl pl-3.5 pr-10 py-2.5 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition"
+                    className="w-full text-xs bg-white dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-xl pl-3.5 pr-10 py-2.5 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#64748B] hover:text-[#0F172A] transition cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] transition cursor-pointer"
                   >
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -306,35 +306,35 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
               </div>
 
               {/* Password Policy Live Requirements Checklist */}
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-[11px]">
-                <p className="font-semibold text-slate-700 mb-1">Password Requirements:</p>
-                <div className="flex items-center gap-2 text-slate-600">
+              <div className="p-3 bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-[#334155] rounded-xl space-y-1.5 text-[11px]">
+                <p className="font-semibold text-slate-700 dark:text-[#CBD5E1] mb-1">Password Requirements:</p>
+                <div className="flex items-center gap-2 text-slate-600 dark:text-[#94A3B8]">
                   {isMinLength ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : (
-                    <XCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <XCircle className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B] shrink-0" />
                   )}
-                  <span className={isMinLength ? 'text-emerald-700 font-medium' : ''}>
+                  <span className={isMinLength ? 'text-emerald-700 dark:text-emerald-400 font-medium' : ''}>
                     At least 8 characters long
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-[#94A3B8]">
                   {isDifferentFromCurrent ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : (
-                    <XCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <XCircle className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B] shrink-0" />
                   )}
-                  <span className={isDifferentFromCurrent ? 'text-emerald-700 font-medium' : ''}>
+                  <span className={isDifferentFromCurrent ? 'text-emerald-700 dark:text-emerald-400 font-medium' : ''}>
                     Different from your temporary password
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-[#94A3B8]">
                   {isMatching ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : (
-                    <XCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <XCircle className="w-3.5 h-3.5 text-slate-400 dark:text-[#64748B] shrink-0" />
                   )}
-                  <span className={isMatching ? 'text-emerald-700 font-medium' : ''}>
+                  <span className={isMatching ? 'text-emerald-700 dark:text-emerald-400 font-medium' : ''}>
                     New password and confirmation match
                   </span>
                 </div>
@@ -355,14 +355,14 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
           </div>
 
           {/* Footer with Logout Option */}
-          <div className="px-6 py-4 bg-slate-50 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#64748B]">
+          <div className="px-6 py-4 bg-slate-50 dark:bg-[#111827] border-t border-[#E2E8F0] dark:border-[#334155] flex items-center justify-between text-xs text-[#64748B] dark:text-[#94A3B8]">
             <span>Need to sign in as another user?</span>
             <button
               type="button"
               id="logout-change-password-btn"
               onClick={handleLogoutClick}
               disabled={loggingOut}
-              className="text-[#DC2626] hover:text-[#B91C1C] font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="text-[#DC2626] dark:text-rose-400 hover:text-[#B91C1C] dark:hover:text-rose-300 font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>{loggingOut ? 'Signing out...' : 'Sign Out'}</span>
