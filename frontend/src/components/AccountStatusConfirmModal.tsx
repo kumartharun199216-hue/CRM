@@ -128,23 +128,23 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
       id="account-status-modal-overlay"
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-[#172033] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200"
         id="account-status-modal"
       >
         {/* Header Banner */}
         <div
           className={`px-6 py-4 border-b flex items-center justify-between ${
             isDeactivating
-              ? 'bg-rose-50/80 border-rose-100 text-rose-900'
-              : 'bg-emerald-50/80 border-emerald-100 text-emerald-900'
+              ? 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-100 dark:border-rose-900/60 text-rose-900 dark:text-rose-200'
+              : 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200'
           }`}
         >
           <div className="flex items-center gap-3">
             <div
               className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs ${
                 isDeactivating
-                  ? 'bg-rose-100 text-rose-600'
-                  : 'bg-emerald-100 text-emerald-600'
+                  ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300'
+                  : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300'
               }`}
             >
               {isDeactivating ? <UserX className="w-5 h-5" /> : <UserCheck className="w-5 h-5" />}
@@ -164,7 +164,7 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
             type="button"
             onClick={onClose}
             id="close-status-modal-btn"
-            className="w-8 h-8 rounded-lg hover:bg-black/5 flex items-center justify-center transition cursor-pointer text-slate-400 hover:text-slate-600"
+            className="w-8 h-8 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center transition cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
           >
             <X className="w-5 h-5" />
           </button>
@@ -173,14 +173,14 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
         {/* Modal Body */}
         <div className="p-6 space-y-4">
           {/* Target User Info Summary */}
-          <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between">
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-linear-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0">
                 {employeeName.charAt(0).toUpperCase()}
               </div>
               <div>
-                <div className="font-bold text-xs text-slate-900">{employeeName}</div>
-                <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1.5">
+                <div className="font-bold text-xs text-slate-900 dark:text-slate-100">{employeeName}</div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1.5">
                   <span>{employeeId}</span>
                   <span>•</span>
                   <span>{user.email}</span>
@@ -188,12 +188,12 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[11px] font-semibold text-slate-600 block">{roleName}</span>
+              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block">{roleName}</span>
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                   isActive
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-rose-50 text-rose-700 border border-rose-200'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                    : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} />
@@ -205,10 +205,10 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
           {/* Error Banner */}
           {error && (
             <div
-              className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2 animate-in fade-in"
+              className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2 animate-in fade-in"
               id="status-action-error-banner"
             >
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold">Action Failed: </span>
                 <span>{error}</span>
@@ -218,8 +218,8 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
 
           {/* Self-Deactivation Warning */}
           {isSelf && isDeactivating && (
-            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
-              <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+              <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold">Administrative Safeguard: </span>
                 You cannot deactivate your own account. Another authorized administrator must make this change to prevent accidental lockout.
@@ -229,13 +229,13 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
 
           {/* Deactivation Details & Safeguards */}
           {isDeactivating ? (
-            <div className="space-y-3.5 text-xs text-slate-600">
-              <div className="p-3 bg-rose-50/50 border border-rose-200 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 font-semibold text-rose-900">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+            <div className="space-y-3.5 text-xs text-slate-600 dark:text-slate-300">
+              <div className="p-3 bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 font-semibold text-rose-900 dark:text-rose-200">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                   <span>Security & Access Consequences</span>
                 </div>
-                <ul className="list-disc list-inside space-y-1 text-slate-700 pl-1 text-[11px]">
+                <ul className="list-disc list-inside space-y-1 text-slate-700 dark:text-slate-300 pl-1 text-[11px]">
                   <li>
                     <strong>Immediate Session Revocation:</strong> All current sessions, tokens, and active refresh tokens will be terminated immediately.
                   </li>
@@ -249,20 +249,20 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
               </div>
 
               {/* Optional Lead Reassignment Checkbox */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
                 <label className="flex items-start gap-2.5 cursor-pointer">
                   <input
                     type="checkbox"
                     id="reassign-leads-checkbox"
                     checked={shouldReassignLeads}
                     onChange={(e) => setShouldReassignLeads(e.target.checked)}
-                    className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="mt-0.5 rounded text-blue-600 dark:bg-slate-800 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
                   />
                   <div>
-                    <div className="font-semibold text-slate-900 text-xs">
+                    <div className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
                       Reassign active leads owned by this employee
                     </div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
                       Transfer all active leads currently assigned to {employeeName} to another active team counsellor.
                     </div>
                   </div>
@@ -270,17 +270,17 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
 
                 {shouldReassignLeads && (
                   <div className="pl-6 pt-1 animate-in fade-in">
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Transfer Active Leads To:
                     </label>
                     {loadingAssignees ? (
-                      <div className="text-xs text-slate-500 italic py-1">Loading team members...</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 italic py-1">Loading team members...</div>
                     ) : eligibleAssignees.length > 0 ? (
                       <select
                         id="reassign-leads-select"
                         value={selectedAssigneeId}
                         onChange={(e) => setSelectedAssigneeId(e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
                       >
                         {eligibleAssignees.map((assignee) => (
                           <option key={assignee.id} value={assignee.id}>
@@ -289,7 +289,7 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
                         ))}
                       </select>
                     ) : (
-                      <div className="p-2 bg-amber-50 text-amber-800 text-[11px] rounded-lg border border-amber-200">
+                      <div className="p-2 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-[11px] rounded-lg border border-amber-200 dark:border-amber-900/50">
                         No other active members found in this team. Leads will remain safely associated with this employee's historical record or can be reallocated later from the Unassigned Leads queue.
                       </div>
                     )}
@@ -299,13 +299,13 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
             </div>
           ) : (
             /* Activation Details */
-            <div className="space-y-3 text-xs text-slate-600">
-              <div className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 font-semibold text-emerald-900">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+              <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 font-semibold text-emerald-900 dark:text-emerald-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Account Restoration</span>
                 </div>
-                <p className="text-[11px] text-slate-700">
+                <p className="text-[11px] text-slate-700 dark:text-slate-300">
                   Activating <strong>{employeeName}</strong> will restore their access to Skill Move CRM.
                   They will be able to log in with their existing credentials, be assigned incoming leads, and view authorized team records.
                 </p>
@@ -314,20 +314,20 @@ export const AccountStatusConfirmModal: React.FC<AccountStatusConfirmModalProps>
           )}
 
           {/* Audit Logging Note */}
-          <div className="text-[11px] text-slate-400 flex items-center gap-1.5 px-1">
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 px-1">
             <Info className="w-3.5 h-3.5 shrink-0" />
             <span>This action and timestamp will be permanently logged in the CRM Audit Trail.</span>
           </div>
         </div>
 
         {/* Modal Actions */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-[#111827] border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             id="cancel-status-action-btn"
             disabled={loading}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl transition cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
           >
             Cancel
           </button>

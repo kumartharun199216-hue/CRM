@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",
+    "@rollup/wasm-node": "^4.64.5",
     "@tailwindcss/vite": "^4.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",

@@ -8,13 +8,18 @@ import {
   LeadAssignmentHistory,
   LeadStageHistory,
   CommunicationTemplate,
+  TemplateAttachment,
+  TemplatePreviewResponse,
   CommunicationLog,
   ReportSchedule,
   AuditEvent,
   DashboardStats,
   LeadTimelineResponse,
   ChangeStagePayload,
+  PreCloserFinancial,
+  LeadFinancialHistoryEntry,
   PaginatedResponse,
+
   ImportPreviewResponse,
   ImportValidateResponse,
   ImportConfirmPayload,
@@ -34,6 +39,10 @@ import {
   LeadTransferAction,
   TeamTransferPreviewResponse,
   TeamTransferPayload,
+  Notification,
+  UnreadCountResponse,
+  MarkAllReadResponse,
+  NotificationListParams,
 } from '../types';
 
 const API_BASE = '/api';
@@ -246,6 +255,7 @@ export const api = {
     q.append('page_size', (params?.page_size || 50).toString());
     return request<PaginatedResponse<Lead>>(`/leads/?${q.toString()}`);
   },
+  getLead: (id: number | string) => request<Lead>(`/leads/${id}/`),
 
   // Bulk Import
   importPreview: (data: FormData | { file_token: string; sheet_name?: string }) => {
@@ -354,20 +364,80 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  getLeadFinancial: (leadId: number) =>
+    request<{ financial: PreCloserFinancial; history: LeadFinancialHistoryEntry[] }>(`/leads/${leadId}/financial/`),
+  updateLeadFinancial: (
+    leadId: number,
+    data: {
+      agreed_amount?: string | number;
+      amount_paid?: string | number;
+      payment_amount?: string | number;
+      mode?: 'record_payment' | 'set_totals';
+      note?: string;
+    }
+  ) =>
+    request<{ detail: string; financial: PreCloserFinancial; history_entry: LeadFinancialHistoryEntry }>(
+      `/leads/${leadId}/financial/`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    ),
   getLeadTimeline: (leadId: number) =>
+
     request<LeadTimelineResponse>(`/leads/${leadId}/timeline/`),
 
-  // Communications
-  getTemplates: (channel?: string) => {
-    const q = channel ? `?channel=${channel}` : '';
-    return request<CommunicationTemplate[]>(`/communications/templates/${q}`);
+  // Communications & Templates
+  getTemplates: (params?: { channel?: string; search?: string; is_active?: boolean; team?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.channel) q.append('channel', params.channel);
+    if (params?.search) q.append('search', params.search);
+    if (params?.is_active !== undefined) q.append('is_active', String(params.is_active));
+    if (params?.team !== undefined) q.append('team', params.team.toString());
+    const queryStr = q.toString() ? `?${q.toString()}` : '';
+    return request<CommunicationTemplate[]>(`/communications/templates/${queryStr}`);
   },
-  createTemplate: (data: { name: string; channel: string; subject?: string; body: string }) =>
-    request<CommunicationTemplate>('/communications/templates/', {
+  getTemplate: (id: number) =>
+    request<CommunicationTemplate>(`/communications/templates/${id}/`),
+  createTemplate: (data: FormData | Partial<CommunicationTemplate>) => {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+    return request<CommunicationTemplate>('/communications/templates/', {
+      method: 'POST',
+      body: isFormData ? data : JSON.stringify(data),
+    });
+  },
+  updateTemplate: (id: number, data: FormData | Partial<CommunicationTemplate>) => {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+    return request<CommunicationTemplate>(`/communications/templates/${id}/`, {
+      method: 'PATCH',
+      body: isFormData ? data : JSON.stringify(data),
+    });
+  },
+  deleteTemplate: (id: number) =>
+    request<{ detail?: string }>(`/communications/templates/${id}/`, {
+      method: 'DELETE',
+    }),
+  toggleTemplateActive: (id: number) =>
+    request<CommunicationTemplate>(`/communications/templates/${id}/toggle-active/`, {
+      method: 'PATCH',
+    }),
+  uploadTemplateAttachments: (templateId: number, formData: FormData) =>
+    request<TemplateAttachment[]>(`/communications/templates/${templateId}/attachments/`, {
+      method: 'POST',
+      body: formData,
+    }),
+  deleteTemplateAttachment: (attachmentId: number) =>
+    request<{ message?: string }>(`/communications/attachments/${attachmentId}/`, {
+      method: 'DELETE',
+    }),
+  previewTemplate: (data: { template_id?: number; lead_id?: number; subject?: string; body?: string; sample_data?: Record<string, string> }) =>
+    request<TemplatePreviewResponse>('/communications/templates/preview/', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  sendEmail: (data: { lead_id: number; subject: string; body: string }) =>
+  downloadAttachmentUrl: (attachmentId: number) =>
+    `${API_BASE}/communications/attachments/${attachmentId}/download/`,
+  sendEmail: (data: { lead_id: number; subject?: string; body?: string; template_id?: number }) =>
     request<CommunicationLog>('/communications/send-email/', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -382,10 +452,42 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  getCommunicationLogs: (params?: { lead?: number; channel?: string }) => {
+  syncCallyzerCalls: (data?: { days?: number; start_date?: string; end_date?: string; call_from?: number | string; call_to?: number | string }) =>
+    request<{ status: string; result: { total_fetched: number; synced_count: number; unmatched_count: number } }>('/communications/callyzer/sync/', {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+  getCommunicationLogs: (params?: {
+    lead?: number;
+    channel?: string;
+    unmatched?: boolean;
+    employee?: number | string;
+    phone?: string;
+    search?: string;
+    status?: string;
+    call_type?: string;
+    start_date?: string;
+    end_date?: string;
+    min_duration?: number;
+    max_duration?: number;
+    has_recording?: string;
+    sort_by?: string;
+  }) => {
     const q = new URLSearchParams();
     if (params?.lead) q.append('lead', params.lead.toString());
     if (params?.channel) q.append('channel', params.channel);
+    if (params?.unmatched) q.append('unmatched', 'true');
+    if (params?.employee) q.append('employee', params.employee.toString());
+    if (params?.phone) q.append('phone', params.phone);
+    if (params?.search) q.append('search', params.search);
+    if (params?.status) q.append('status', params.status);
+    if (params?.call_type) q.append('call_type', params.call_type);
+    if (params?.start_date) q.append('start_date', params.start_date);
+    if (params?.end_date) q.append('end_date', params.end_date);
+    if (params?.min_duration !== undefined) q.append('min_duration', params.min_duration.toString());
+    if (params?.max_duration !== undefined) q.append('max_duration', params.max_duration.toString());
+    if (params?.has_recording) q.append('has_recording', params.has_recording);
+    if (params?.sort_by) q.append('sort_by', params.sort_by);
     return request<CommunicationLog[]>(`/communications/logs/?${q.toString()}`);
   },
 
@@ -405,10 +507,83 @@ export const api = {
   getAuditEvents: () => request<AuditEvent[]>('/audit/events/'),
 
   // Dashboard Aggregation
-  getDashboardStats: (days?: number) => {
+  getDashboardStats: (
+    params?:
+      | number
+      | {
+        preset?: string;
+        days?: number;
+        start_date?: string;
+        end_date?: string;
+        team_id?: number | string | null;
+        employee_id?: number | string | null;
+        stage_id?: number | string | null;
+        source?: string | null;
+        channel?: string | null;
+        search?: string;
+      }
+  ) => {
     const q = new URLSearchParams();
-    if (days !== undefined) q.append('days', days.toString());
-    return request<DashboardStats>(`/leads/dashboard-stats/?${q.toString()}`);
+    if (typeof params === 'number') {
+      q.append('days', params.toString());
+    } else if (params && typeof params === 'object') {
+      if (params.preset) q.append('preset', params.preset);
+      if (params.days !== undefined) q.append('days', params.days.toString());
+      if (params.start_date) q.append('start_date', params.start_date);
+      if (params.end_date) q.append('end_date', params.end_date);
+      if (params.team_id !== undefined && params.team_id !== null && params.team_id !== 'ALL') {
+        q.append('team_id', params.team_id.toString());
+      }
+      if (params.employee_id !== undefined && params.employee_id !== null && params.employee_id !== 'ALL') {
+        q.append('employee_id', params.employee_id.toString());
+      }
+      if (params.stage_id !== undefined && params.stage_id !== null && params.stage_id !== 'ALL') {
+        q.append('stage_id', params.stage_id.toString());
+      }
+      if (params.source && params.source !== 'ALL') q.append('source', params.source);
+      if (params.channel && params.channel !== 'ALL') q.append('channel', params.channel);
+      if (params.search && params.search.trim()) q.append('search', params.search.trim());
+    }
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    return request<DashboardStats>(`/leads/dashboard-stats/${qs}`);
   },
+
+  // Notifications
+  getNotifications: (params?: NotificationListParams) => {
+    const q = new URLSearchParams();
+    if (params) {
+      if (params.page !== undefined) q.append('page', params.page.toString());
+      if (params.page_size !== undefined) q.append('page_size', params.page_size.toString());
+      if (params.unread_only !== undefined) q.append('unread_only', params.unread_only.toString());
+      if (params.type) q.append('type', params.type);
+      if (params.priority) q.append('priority', params.priority);
+      if (params.archived) q.append('archived', params.archived);
+      if (params.ordering) q.append('ordering', params.ordering);
+    }
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    return request<PaginatedResponse<Notification>>(`/notifications/${qs}`);
+  },
+
+  getUnreadCount: () => request<UnreadCountResponse>('/notifications/unread-count/'),
+
+  getNotification: (id: string) => request<Notification>(`/notifications/${id}/`),
+
+  markNotificationRead: (id: string) =>
+    request<Notification>(`/notifications/${id}/read/`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  markAllNotificationsRead: () =>
+    request<MarkAllReadResponse>('/notifications/read-all/', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  archiveNotification: (id: string) =>
+    request<Notification>(`/notifications/${id}/archive/`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
 };
 

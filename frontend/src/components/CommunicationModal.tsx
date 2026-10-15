@@ -6,11 +6,16 @@ import {
   Mail,
   MessageSquare,
   Phone,
+  PhoneCall,
+  Volume2,
   Send,
   AlertTriangle,
   CheckCircle2,
   Clock,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Paperclip,
+  FileText,
+  RefreshCw
 } from 'lucide-react';
 
 interface CommunicationModalProps {
@@ -28,6 +33,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
 }) => {
   const [channel, setChannel] = useState<'EMAIL' | 'WHATSAPP' | 'CALL'>(initialChannel);
   const [templates, setTemplates] = useState<CommunicationTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [logs, setLogs] = useState<CommunicationLog[]>([]);
 
   // Email form
@@ -39,6 +45,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
 
   // Submission state
   const [submitting, setSubmitting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [resultMsg, setResultMsg] = useState<{ type: 'success' | 'error' | 'blocker'; text: string } | null>(null);
 
   useEffect(() => {
@@ -48,6 +55,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
   useEffect(() => {
     if (lead && isOpen) {
       setResultMsg(null);
+      setSelectedTemplate(null);
       api.getTemplates()
         .then(setTemplates)
         .catch(() => {});
@@ -60,13 +68,31 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
 
   if (!isOpen || !lead) return null;
 
-  const handleApplyTemplate = (template: CommunicationTemplate) => {
+  const handleApplyTemplate = async (template: CommunicationTemplate) => {
+    setSelectedTemplate(template);
     if (template.channel === 'EMAIL') {
-      setEmailSubject(template.subject || '');
-      setEmailBody(template.body);
+      try {
+        const preview = await api.previewTemplate({
+          template_id: template.id,
+          lead_id: lead.id,
+          subject: template.subject,
+          body: template.body,
+        });
+        setEmailSubject(preview.subject || template.subject || '');
+        setEmailBody(preview.body || template.body || '');
+      } catch {
+        setEmailSubject(template.subject || '');
+        setEmailBody(template.body);
+      }
     } else if (template.channel === 'WHATSAPP') {
       setWhatsappMessage(template.body);
     }
+  };
+
+  const handleClearTemplate = () => {
+    setSelectedTemplate(null);
+    setEmailSubject('');
+    setEmailBody('');
   };
 
   const handleSendEmail = async (e: React.FormEvent) => {
@@ -77,12 +103,19 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     try {
       await api.sendEmail({
         lead_id: lead.id,
+        template_id: selectedTemplate?.id,
         subject: emailSubject,
         body: emailBody,
       });
-      setResultMsg({ type: 'success', text: `Email sent via Google SMTP to ${lead.email}.` });
+      const attCount = selectedTemplate?.attachments?.length || 0;
+      const attText = attCount > 0 ? ` with ${attCount} attachment${attCount > 1 ? 's' : ''} enclosed` : '';
+      setResultMsg({
+        type: 'success',
+        text: `Email dispatched and accepted by Google SMTP for ${lead.email}${attText}.`,
+      });
       setEmailSubject('');
       setEmailBody('');
+      setSelectedTemplate(null);
       api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Email failed to send.';
@@ -126,8 +159,9 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     setResultMsg(null);
 
     try {
-      await api.initiateCall({ lead_id: lead.id });
-      setResultMsg({ type: 'success', text: `Call initiated via Callyzer for ${lead.phone}.` });
+      const res = await api.initiateCall({ lead_id: lead.id });
+      const telHint = res.tel_url ? ` Direct dial or dial from your paired phone.` : '';
+      setResultMsg({ type: 'success', text: `Call queued on Callyzer for ${lead.phone}.${telHint}` });
       api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Call initiation failed.';
@@ -141,38 +175,57 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     }
   };
 
+  const handleSyncCalls = async () => {
+    if (!lead) return;
+    setSyncing(true);
+    try {
+      const res = await api.syncCallyzerCalls();
+      setResultMsg({
+        type: 'success',
+        text: `Call history synchronized from Callyzer (${res.result?.synced_count || 0} calls processed).`
+      });
+      const updatedLogs = await api.getCommunicationLogs({ lead: lead.id });
+      setLogs(updatedLogs);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to sync call history';
+      setResultMsg({ type: 'error', text: msg });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const relevantTemplates = templates.filter((t) =>
     channel === 'CALL' ? false : t.channel === channel
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-      <div className="bg-white border border-[#E2E8F0] rounded-xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] relative text-[#0F172A]">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+      <div className="bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] rounded-xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] relative text-[#0F172A] dark:text-[#F8FAFC]">
         {/* Top Accent Bar */}
         <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#2563EB] via-[#7C3AED] to-[#1E3A8A] opacity-90" />
 
         {/* Header */}
-        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC] pt-4.5">
+        <div className="p-4 border-b border-[#E2E8F0] dark:border-[#334155] flex items-center justify-between bg-[#F8FAFC] dark:bg-[#111827] pt-4.5">
           <div>
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2">
               <span>Lead Communication</span>
-              <span className="text-xs font-mono text-[#2563EB] font-semibold">({lead.contact_name || lead.title})</span>
+              <span className="text-xs font-mono text-[#2563EB] dark:text-blue-400 font-semibold">({lead.contact_name || lead.title})</span>
             </h3>
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
               Approved channels: Google SMTP, WhatsApp Business Platform, and Callyzer
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition cursor-pointer"
+            className="p-1.5 text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] rounded-lg transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Channel Navigation Tabs */}
-        <div className="flex border-b border-[#E2E8F0] bg-[#F8FAFC] px-4">
+        <div className="flex border-b border-[#E2E8F0] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#111827] px-4">
           <button
             type="button"
             onClick={() => {
@@ -181,8 +234,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             }}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition cursor-pointer ${
               channel === 'EMAIL'
-                ? 'border-[#2563EB] text-[#2563EB]'
-                : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
+                ? 'border-[#2563EB] text-[#2563EB] dark:text-blue-400'
+                : 'border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
             }`}
           >
             <Mail className="w-3.5 h-3.5" />
@@ -197,8 +250,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             }}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition cursor-pointer ${
               channel === 'WHATSAPP'
-                ? 'border-[#16A34A] text-[#16A34A]'
-                : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
+                ? 'border-[#16A34A] text-[#16A34A] dark:text-emerald-400'
+                : 'border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -213,8 +266,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             }}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition cursor-pointer ${
               channel === 'CALL'
-                ? 'border-[#7C3AED] text-[#7C3AED]'
-                : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
+                ? 'border-[#7C3AED] text-[#7C3AED] dark:text-purple-400'
+                : 'border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
             }`}
           >
             <Phone className="w-3.5 h-3.5" />
@@ -229,10 +282,10 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             <div
               className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
                 resultMsg.type === 'success'
-                  ? 'bg-[#DCFCE7] border-[#BBF7D0] text-[#16A34A]'
+                  ? 'bg-[#DCFCE7] dark:bg-emerald-950/40 border-[#BBF7D0] dark:border-emerald-800 text-[#16A34A] dark:text-emerald-300'
                   : resultMsg.type === 'blocker'
-                  ? 'bg-[#FEF3C7] border-[#FDE68A] text-[#D97706]'
-                  : 'bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]'
+                  ? 'bg-[#FEF3C7] dark:bg-amber-950/40 border-[#FDE68A] dark:border-amber-800 text-[#D97706] dark:text-amber-300'
+                  : 'bg-[#FEF2F2] dark:bg-rose-950/40 border-[#FECACA] dark:border-rose-800 text-[#DC2626] dark:text-rose-400'
               }`}
             >
               {resultMsg.type === 'success' ? (
@@ -251,20 +304,20 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
 
           {/* Template Selection helper */}
           {relevantTemplates.length > 0 && (
-            <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between gap-3">
-              <div className="flex items-center gap-1.5 text-xs text-[#0F172A]">
-                <FileSpreadsheet className="w-3.5 h-3.5 text-[#2563EB]" />
+            <div className="p-3 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-[#0F172A] dark:text-[#F8FAFC]">
+                <FileSpreadsheet className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />
                 <span>Pre-load from communication template:</span>
               </div>
               <select
+                value={selectedTemplate?.id || ''}
                 onChange={(e) => {
                   const tmpl = relevantTemplates.find((t) => t.id === Number(e.target.value));
                   if (tmpl) handleApplyTemplate(tmpl);
                 }}
-                defaultValue=""
-                className="text-xs bg-white border border-[#CBD5E1] rounded-lg px-2.5 py-1 text-[#0F172A] focus:outline-none focus:border-[#2563EB] cursor-pointer"
+                className="text-xs bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-2.5 py-1 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#2563EB] cursor-pointer"
               >
-                <option value="" disabled>Choose template...</option>
+                <option value="">Choose template...</option>
                 {relevantTemplates.map((t) => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
@@ -272,35 +325,76 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             </div>
           )}
 
+          {/* Active Template & Enclosed Attachments Indicator */}
+          {selectedTemplate && (
+            <div className="p-3 bg-[#EFF6FF] dark:bg-blue-950/30 border border-[#BFDBFE] dark:border-blue-900/50 rounded-xl space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-[#1E40AF] dark:text-blue-300">
+                  <span className="font-semibold">Selected Template:</span>
+                  <span className="font-medium">{selectedTemplate.name}</span>
+                  <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">({selectedTemplate.body_format === 'HTML' ? 'HTML' : 'Plain Text'})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearTemplate}
+                  className="text-[11px] text-[#DC2626] dark:text-rose-400 hover:underline cursor-pointer"
+                >
+                  Clear template
+                </button>
+              </div>
+
+              {selectedTemplate.attachments && selectedTemplate.attachments.length > 0 && (
+                <div className="space-y-1 pt-1 border-t border-[#DBEAFE] dark:border-blue-900/50">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#1E40AF] dark:text-blue-300">
+                    <Paperclip className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />
+                    <span>Enclosed Attachments to be Sent ({selectedTemplate.attachments.length}):</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedTemplate.attachments.map((att) => (
+                      <span
+                        key={att.id}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-white dark:bg-[#1E293B] border border-[#BFDBFE] dark:border-blue-900 text-[#1E3A8A] dark:text-blue-300"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />
+                        <span className="font-medium">{att.original_filename}</span>
+                        <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">({att.file_size_display})</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Channel 1: Google SMTP Email */}
           {channel === 'EMAIL' && (
             <form onSubmit={handleSendEmail} className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#64748B]">
-                <span>To: <strong className="text-[#0F172A] font-mono">{lead.email || 'No email registered'}</strong></span>
-                <span className="text-[11px] text-[#64748B]">Google SMTP (smtp.gmail.com:587)</span>
+              <div className="flex items-center justify-between text-xs text-[#64748B] dark:text-[#94A3B8]">
+                <span>To: <strong className="text-[#0F172A] dark:text-[#F8FAFC] font-mono">{lead.email || 'No email registered'}</strong></span>
+                <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">Google SMTP (smtp.gmail.com:587)</span>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] mb-1">Subject *</label>
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1">Subject *</label>
                 <input
                   type="text"
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
                   placeholder="Subject line..."
                   required
-                  className="w-full text-xs bg-white border border-[#CBD5E1] rounded-lg px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition font-sans"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition font-sans"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] mb-1">Message Body *</label>
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1">Message Body *</label>
                 <textarea
                   rows={4}
                   value={emailBody}
                   onChange={(e) => setEmailBody(e.target.value)}
                   placeholder="Type email body..."
                   required
-                  className="w-full text-xs bg-white border border-[#CBD5E1] rounded-lg px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] font-sans transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] font-sans transition"
                 />
               </div>
 
@@ -320,20 +414,20 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
           {/* Channel 2: WhatsApp Business Platform */}
           {channel === 'WHATSAPP' && (
             <form onSubmit={handleSendWhatsApp} className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#64748B]">
-                <span>To: <strong className="text-[#0F172A] font-mono">{lead.phone || 'No phone registered'}</strong></span>
-                <span className="text-[11px] text-[#64748B]">WhatsApp Business Cloud API</span>
+              <div className="flex items-center justify-between text-xs text-[#64748B] dark:text-[#94A3B8]">
+                <span>To: <strong className="text-[#0F172A] dark:text-[#F8FAFC] font-mono">{lead.phone || 'No phone registered'}</strong></span>
+                <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">WhatsApp Business Cloud API</span>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] mb-1">WhatsApp Message *</label>
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#CBD5E1] mb-1">WhatsApp Message *</label>
                 <textarea
                   rows={4}
                   value={whatsappMessage}
                   onChange={(e) => setWhatsappMessage(e.target.value)}
                   placeholder="Type WhatsApp message..."
                   required
-                  className="w-full text-xs bg-white border border-[#CBD5E1] rounded-lg px-3 py-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#16A34A] font-sans transition"
+                  className="w-full text-xs bg-white dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#16A34A] font-sans transition"
                 />
               </div>
 
@@ -352,66 +446,116 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
 
           {/* Channel 3: Callyzer Calling */}
           {channel === 'CALL' && (
-            <div className="p-6 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl space-y-4 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center mx-auto text-[#2563EB] shadow-xs">
+            <div className="p-6 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl space-y-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] dark:bg-blue-950/40 border border-[#BFDBFE] dark:border-blue-900/50 flex items-center justify-center mx-auto text-[#2563EB] dark:text-blue-400 shadow-xs">
                 <Phone className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-xs font-semibold text-[#0F172A]">Callyzer Outbound Calling</h4>
-                <p className="text-xs text-[#64748B] mt-1 max-w-md mx-auto">
-                  Initiate a verified call session to <span className="font-mono text-[#0F172A] font-semibold">{lead.phone || 'N/A'}</span>.
-                  Per project rules, unverified calls are never simulated.
+                <h4 className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Callyzer Outbound Calling & Telephony</h4>
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1 max-w-md mx-auto">
+                  Queue call session to <span className="font-mono text-[#0F172A] dark:text-[#F8FAFC] font-semibold">{lead.phone || 'N/A'}</span> on your connected Callyzer Biz mobile device, or dial directly.
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleInitiateCall}
-                disabled={submitting || !lead.phone}
-                className="crm-btn-primary inline-flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
-              >
-                <Phone className="w-3.5 h-3.5" />
-                {submitting ? 'Connecting with Callyzer...' : 'Initiate Call'}
-              </button>
+              <div className="flex items-center justify-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleInitiateCall}
+                  disabled={submitting || !lead.phone}
+                  className="crm-btn-primary inline-flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  {submitting ? 'Connecting with Callyzer...' : 'Queue Call (Callyzer)'}
+                </button>
+                {lead.phone && (
+                  <a
+                    href={`tel:${lead.phone.replace(/[^0-9+]/g, '')}`}
+                    className="crm-btn-secondary inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer"
+                    title="Direct Dial via Device / Phone Link"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5 text-[#16A34A] dark:text-emerald-400" />
+                    Direct Dial
+                  </a>
+                )}
+              </div>
             </div>
           )}
 
           {/* Lead Communication Logs */}
-          <div className="pt-3 border-t border-[#E2E8F0] space-y-2">
-            <h4 className="text-xs font-semibold text-[#0F172A] flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-[#64748B]" />
-              Communication Activity Log ({logs.length})
-            </h4>
+          <div className="pt-3 border-t border-[#E2E8F0] dark:border-[#334155] space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
+                Communication Activity Log ({logs.length})
+              </h4>
+              <button
+                type="button"
+                onClick={handleSyncCalls}
+                disabled={syncing}
+                className="text-[11px] text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                title="Synchronize real call logs from Callyzer"
+              >
+                <RefreshCw className={`w-3 h-3 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing...' : 'Sync Call History'}
+              </button>
+            </div>
 
             {logs.length === 0 ? (
-              <p className="text-xs text-[#64748B] italic">No communication logged for this lead yet.</p>
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] italic">No communication logged for this lead yet.</p>
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
                 {logs.map((log) => (
                   <div
                     key={log.id}
-                    className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs space-y-1"
+                    className="p-3 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl text-xs space-y-1.5"
                   >
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-semibold text-[#0F172A]">
+                      <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
                         [{log.channel}] to {log.recipient}
                       </span>
                       <span
                         className={`crm-pill text-[10px] font-mono ${
                           log.status === 'SUCCESS'
                             ? 'crm-pill-success'
+                            : log.status === 'QUEUED'
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-300'
+                            : log.status === 'MISSED'
+                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300 border-orange-300'
+                            : log.status === 'REJECTED'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300 border-purple-300'
                             : log.status === 'BLOCKED'
                             ? 'crm-pill-warning'
                             : 'crm-pill-error'
                         }`}
                       >
-                        {log.status}
+                        {log.status === 'QUEUED' ? 'QUEUED ON DEVICE' : log.status}
                       </span>
                     </div>
-                    {log.error_message && (
-                      <p className="text-[11px] text-[#DC2626] m-0">{log.error_message}</p>
+
+                    {log.channel === 'CALL' && (log.call_type || (log.call_duration !== undefined && log.call_duration !== null)) && (
+                      <div className="flex items-center gap-2 text-[11px] text-[#2563EB] dark:text-blue-400 font-medium">
+                        <span>{log.call_type || 'Call'}</span>
+                        {log.call_duration !== null && log.call_duration !== undefined && (
+                          <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">({log.call_duration}s duration)</span>
+                        )}
+                      </div>
                     )}
-                    <div className="text-[10px] text-[#64748B] flex justify-between pt-1">
+
+                    {log.content && (
+                      <p className="text-[11px] text-[#334155] dark:text-slate-300 m-0">{log.content}</p>
+                    )}
+
+                    {log.call_recording_url && (
+                      <div className="pt-1 flex items-center gap-2">
+                        <Volume2 className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400 shrink-0" />
+                        <audio controls src={log.call_recording_url} className="h-6 w-full max-w-xs" />
+                      </div>
+                    )}
+
+                    {log.error_message && (
+                      <p className="text-[11px] text-[#DC2626] dark:text-rose-400 m-0">{log.error_message}</p>
+                    )}
+                    <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] flex justify-between pt-1">
                       <span>Initiated by: {log.initiated_by_name}</span>
                       <span>{new Date(log.created_at).toLocaleString()}</span>
                     </div>
@@ -423,11 +567,11 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-[#E2E8F0] bg-[#F8FAFC] flex justify-end">
+        <div className="p-3 border-t border-[#E2E8F0] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#111827] flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="crm-btn-secondary px-3.5 py-1.5 rounded-lg text-xs font-medium text-[#0F172A] transition cursor-pointer"
+            className="crm-btn-secondary px-3.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
           >
             Close
           </button>

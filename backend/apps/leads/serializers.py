@@ -2,7 +2,15 @@ import re
 from django.db import transaction
 from django.core.validators import validate_email
 from rest_framework import serializers
-from .models import PipelineStage, Lead, LeadAssignmentHistory, LeadStageHistory, LeadImportBatch
+from .models import (
+    PipelineStage,
+    Lead,
+    LeadAssignmentHistory,
+    LeadStageHistory,
+    LeadImportBatch,
+    PreCloserFinancial,
+    LeadFinancialHistory
+)
 from apps.teams.models import Team
 from apps.authentication.models import User, UserRole
 from apps.audit.models import AuditEvent
@@ -14,9 +22,79 @@ class PipelineStageSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'order', 'is_active', 'created_at', 'updated_at']
 
     def validate_order(self, value):
-        if value < 1 or value > 12:
-            raise serializers.ValidationError("Pipeline stage order must be between 1 and 12.")
+        if value < 1 or value > 20:
+            raise serializers.ValidationError("Pipeline stage order must be between 1 and 20.")
         return value
+
+
+class PreCloserFinancialSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    updated_by_name = serializers.CharField(source='updated_by.username', read_only=True)
+    outstanding_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = PreCloserFinancial
+        fields = [
+            'id', 'lead', 'agreed_amount', 'amount_paid', 'outstanding_balance',
+            'created_by', 'created_by_name', 'updated_by', 'updated_by_name',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'lead', 'outstanding_balance', 'created_by', 'created_by_name',
+            'updated_by', 'updated_by_name', 'created_at', 'updated_at'
+        ]
+
+    def validate(self, attrs):
+        agreed = attrs.get('agreed_amount')
+        paid = attrs.get('amount_paid')
+        from decimal import Decimal
+        if agreed is not None and agreed < Decimal('0.00'):
+            raise serializers.ValidationError({"agreed_amount": "Total agreed amount cannot be negative."})
+        if paid is not None and paid < Decimal('0.00'):
+            raise serializers.ValidationError({"amount_paid": "Amount paid cannot be negative."})
+        if agreed is not None and paid is not None and paid > agreed:
+            raise serializers.ValidationError({"amount_paid": "Amount paid cannot exceed the total agreed amount."})
+        return attrs
+
+
+class PreCloserFinancialUpdateSerializer(serializers.Serializer):
+    agreed_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    amount_paid = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    payment_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    mode = serializers.ChoiceField(choices=['record_payment', 'set_totals'], default='record_payment', required=False)
+    note = serializers.CharField(required=False, allow_blank=True, default='')
+
+    def validate(self, attrs):
+        from decimal import Decimal
+        agreed = attrs.get('agreed_amount')
+        paid = attrs.get('amount_paid')
+        payment = attrs.get('payment_amount')
+
+        if agreed is None and paid is None and payment is None:
+            raise serializers.ValidationError({"non_field_errors": ["Either payment_amount or agreed_amount/amount_paid must be provided."]})
+
+        if agreed is not None and agreed < Decimal('0.00'):
+            raise serializers.ValidationError({"agreed_amount": "Total agreed amount cannot be negative."})
+        if paid is not None and paid < Decimal('0.00'):
+            raise serializers.ValidationError({"amount_paid": "Amount paid cannot be negative."})
+        if payment is not None and payment <= Decimal('0.00'):
+            raise serializers.ValidationError({"payment_amount": "Payment amount received must be greater than zero."})
+        if agreed is not None and paid is not None and paid > agreed:
+            raise serializers.ValidationError({"amount_paid": "Amount paid cannot exceed the total agreed amount."})
+        return attrs
+
+
+
+class LeadFinancialHistorySerializer(serializers.ModelSerializer):
+    changed_by_name = serializers.CharField(source='changed_by.username', read_only=True)
+
+    class Meta:
+        model = LeadFinancialHistory
+        fields = [
+            'id', 'lead', 'financial_record', 'agreed_amount', 'amount_paid',
+            'outstanding_balance', 'changed_by', 'changed_by_name', 'note', 'timestamp'
+        ]
+        read_only_fields = fields
 
 
 class LeadAssignmentHistorySerializer(serializers.ModelSerializer):
@@ -48,15 +126,75 @@ class LeadStageHistorySerializer(serializers.ModelSerializer):
         ]
 
 
+def is_pending_closure_stage(stage):
+    if not stage:
+        return False
+    if getattr(stage, 'order', None) == 9:
+        return True
+    name_clean = stage.name.strip().lower().replace(' ', '').replace('-', '').replace('_', '')
+    return name_clean == 'pendingclosure'
+
+
 class LeadChangeStageSerializer(serializers.Serializer):
     destination_stage_id = serializers.IntegerField(required=True)
     note = serializers.CharField(required=True, allow_blank=False)
     expected_current_stage_id = serializers.IntegerField(required=False, allow_null=True)
+    agreed_amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        allow_null=True
+    )
+    amount_paid = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        allow_null=True
+    )
 
     def validate_note(self, value):
         if not value or not value.strip():
             raise serializers.ValidationError("A note explaining the stage change is required.")
         return value.strip()
+
+    def validate(self, attrs):
+        dest_stage_id = attrs.get('destination_stage_id')
+        dest_stage = PipelineStage.objects.filter(id=dest_stage_id, is_active=True).first()
+        if not dest_stage:
+            raise serializers.ValidationError({
+                "destination_stage_id": "Selected destination stage does not exist or is inactive."
+            })
+
+        # Check if destination stage is Pending Closure
+        if is_pending_closure_stage(dest_stage):
+            agreed = attrs.get('agreed_amount')
+            paid = attrs.get('amount_paid')
+
+            if agreed is None:
+                raise serializers.ValidationError({
+                    "agreed_amount": "Total agreed amount is required when transitioning to Pending Closure."
+                })
+            if paid is None:
+                raise serializers.ValidationError({
+                    "amount_paid": "Amount paid is required when transitioning to Pending Closure."
+                })
+
+            from decimal import Decimal
+            if agreed < Decimal('0.00'):
+                raise serializers.ValidationError({
+                    "agreed_amount": "Total agreed amount cannot be negative."
+                })
+            if paid < Decimal('0.00'):
+                raise serializers.ValidationError({
+                    "amount_paid": "Amount paid cannot be negative."
+                })
+            if paid > agreed:
+                raise serializers.ValidationError({
+                    "amount_paid": "Amount paid cannot exceed the total agreed amount."
+                })
+
+        return attrs
+
 
 
 class LeadImportBatchSerializer(serializers.ModelSerializer):
@@ -106,6 +244,8 @@ class LeadSerializer(serializers.ModelSerializer):
     stage_name = serializers.CharField(source='stage.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
     last_stage_change = serializers.SerializerMethodField()
+    pre_closer_financial = PreCloserFinancialSerializer(read_only=True)
+    pending_closure_financial = PreCloserFinancialSerializer(source='pre_closer_financial', read_only=True)
 
     def get_assigned_employee_name(self, obj):
         return obj.assigned_employee.username if obj.assigned_employee else None
@@ -137,9 +277,12 @@ class LeadSerializer(serializers.ModelSerializer):
             'team', 'team_name',
             'created_by', 'created_by_name',
             'created_at', 'updated_at', 'archived_at',
-            'last_stage_change'
+            'last_stage_change',
+            'pre_closer_financial',
+            'pending_closure_financial'
         ]
-        read_only_fields = ['id', 'lead_id', 'created_by', 'created_at', 'updated_at', 'last_stage_change']
+        read_only_fields = ['id', 'lead_id', 'created_by', 'created_at', 'updated_at', 'last_stage_change', 'pre_closer_financial', 'pending_closure_financial']
+
         extra_kwargs = {
             'team': {'required': False},
             'assigned_employee': {'required': False},

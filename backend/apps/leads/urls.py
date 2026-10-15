@@ -12,6 +12,7 @@ from .views import (
     LeadAssignView,
     DashboardStatsView,
     LeadChangeStageView,
+    LeadFinancialView,
     LeadTimelineView,
     LeadImportPreviewView,
     LeadImportValidateView,
@@ -38,9 +39,11 @@ urlpatterns = [
     path('import/batches/<int:pk>/rejected/', LeadImportBatchRejectedRowsView.as_view(), name='lead-import-batch-rejected'),
     path('<int:pk>/assign/', LeadAssignView.as_view(), name='lead-assign'),
     path('<int:pk>/change-stage/', LeadChangeStageView.as_view(), name='lead-change-stage'),
+    path('<int:pk>/financial/', LeadFinancialView.as_view(), name='lead-financial'),
     path('', LeadListCreateView.as_view(), name='lead-list-create'),
     path('<int:pk>/', LeadDetailView.as_view(), name='lead-detail'),
     path('<int:lead_id>/assignment-history/', LeadAssignmentHistoryListView.as_view(), name='lead-assignment-history'),
     path('<int:lead_id>/stage-history/', LeadStageHistoryListView.as_view(), name='lead-stage-history'),
     path('<int:lead_id>/timeline/', LeadTimelineView.as_view(), name='lead-timeline'),
 ]
+

@@ -1,6 +1,6 @@
 export type UserRole = 'ADMIN' | 'MANAGER' | 'SALES_EMPLOYEE';
 
-export type ViewType = 'dashboard' | 'spreadsheet' | 'kanban' | 'unassigned' | 'import' | 'users' | 'teams' | 'profile' | 'change-password' | 'not_found';
+export type ViewType = 'dashboard' | 'spreadsheet' | 'kanban' | 'unassigned' | 'import' | 'users' | 'teams' | 'templates' | 'profile' | 'change-password' | 'lead360' | 'notifications' | 'calls' | 'not_found';
 
 export interface UserUpdatePayload {
   full_name?: string;
@@ -238,6 +238,8 @@ export interface Lead {
   placement_fee: string | number | null;
   career_counsellor: string;
   city: string;
+  source?: string;
+  batch_tag?: string;
   next_follow_up: string | null;
   team: number;
   team_name: string;
@@ -258,6 +260,38 @@ export interface Lead {
     to_stage_name: string;
     note: string;
   } | null;
+  pre_closer_financial?: PreCloserFinancial | null;
+  pending_closure_financial?: PreCloserFinancial | null;
+}
+
+export type PendingClosureFinancial = PreCloserFinancial;
+
+
+export interface PreCloserFinancial {
+  id?: number;
+  lead?: number;
+  agreed_amount: string;
+  amount_paid: string;
+  outstanding_balance: string;
+  created_by?: number;
+  created_by_name?: string;
+  updated_by?: number;
+  updated_by_name?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LeadFinancialHistoryEntry {
+  id: number;
+  lead: number;
+  financial_record: number;
+  agreed_amount: string;
+  amount_paid: string;
+  outstanding_balance: string;
+  changed_by: number;
+  changed_by_name: string;
+  note: string;
+  timestamp: string;
 }
 
 export interface LeadAssignmentHistory {
@@ -319,31 +353,68 @@ export interface ChangeStagePayload {
   destination_stage_id: number;
   note: string;
   expected_current_stage_id?: number | null;
+  agreed_amount?: string | number | null;
+  amount_paid?: string | number | null;
+}
+
+
+export interface TemplateAttachment {
+  id: number;
+  template: number;
+  original_filename: string;
+  file_size: number;
+  file_size_display: string;
+  content_type: string;
+  download_url: string;
+  uploaded_by: number;
+  uploaded_by_name: string;
+  uploaded_at: string;
 }
 
 export interface CommunicationTemplate {
   id: number;
   name: string;
+  description?: string;
   channel: 'EMAIL' | 'WHATSAPP';
-  subject?: string;
+  subject: string;
   body: string;
+  body_format: 'PLAIN' | 'HTML';
+  is_active: boolean;
+  team: number | null;
+  team_name?: string | null;
   created_by: number;
   created_by_name: string;
+  updated_by?: number | null;
+  updated_by_name?: string | null;
+  attachments_count: number;
+  attachments: TemplateAttachment[];
   created_at: string;
+  updated_at: string;
 }
 
 export interface CommunicationLog {
   id: number;
-  lead: number;
-  lead_title: string;
+  lead?: number | null;
+  lead_title?: string;
+  lead_contact_name?: string;
+  lead_phone?: string;
   channel: 'EMAIL' | 'WHATSAPP' | 'CALL';
   recipient: string;
   subject?: string;
   content: string;
-  status: 'SUCCESS' | 'FAILED' | 'BLOCKED';
+  status: 'SUCCESS' | 'FAILED' | 'BLOCKED' | 'QUEUED' | 'MISSED' | 'REJECTED';
   error_message?: string;
   external_reference_id?: string;
+  call_duration?: number;
+  call_recording_url?: string;
+  call_type?: string;
+  tel_url?: string;
+  synced_at?: string;
+  call_datetime?: string;
+  provider_source?: string;
+  initiated_by?: number | null;
   initiated_by_name: string;
+  initiated_by_mobile?: string;
   created_at: string;
 }
 
@@ -370,9 +441,12 @@ export interface AuditEvent {
 export interface DashboardKPIs {
   total_leads: number;
   active_leads: number;
+  active_pipeline_leads?: number;
+  new_leads_in_period?: number;
   created_in_period: number;
   enrolled_leads: number;
   lost_leads: number;
+  pending_closure_leads?: number;
   unassigned_leads: number;
   assigned_leads: number;
   total_estimated_revenue: number;
@@ -380,6 +454,7 @@ export interface DashboardKPIs {
   pending_followups: number;
   followups_today: number;
   followups_overdue: number;
+  followups_next_7_days?: number;
 }
 
 export interface PipelineStageStat {
@@ -388,67 +463,250 @@ export interface PipelineStageStat {
   order: number;
   count: number;
   percentage: number;
+  entries_in_period?: number;
+  is_pending_closure?: boolean;
+  is_enrolled?: boolean;
+}
+
+export interface OutstandingLeadRow {
+  lead_id: number;
+  lead_code: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  assigned_employee_id: number | null;
+  assigned_employee_name: string;
+  team_id: number | null;
+  team_name: string;
+  agreed_amount: number;
+  amount_paid: number;
+  outstanding_balance: number;
+  is_missing_financial: boolean;
+  stage_id: number | null;
+  stage_name: string;
+}
+
+export interface PendingClosureFinancials {
+  leads_count: number;
+  total_agreed_amount: number;
+  total_amount_paid: number;
+  total_outstanding_balance: number;
+  missing_financial_count: number;
+  outstanding_leads_table: OutstandingLeadRow[];
+  currency: string;
+}
+
+export interface CommunicationChannelStats {
+  attempts: number;
+  accepted?: number;
+  success?: number;
+  failed: number;
+  blocked: number;
+}
+
+export interface RecentCommunicationLogItem {
+  id: number;
+  channel: 'EMAIL' | 'WHATSAPP' | 'CALL';
+  recipient: string;
+  lead_id: number | null;
+  lead_code: string;
+  lead_name: string;
+  status: 'SUCCESS' | 'FAILED' | 'BLOCKED';
+  error_message?: string;
+  initiated_by_name: string;
+  created_at: string;
+}
+
+export interface CommunicationsActivity {
+  calls: CommunicationChannelStats;
+  email: CommunicationChannelStats;
+  whatsapp: CommunicationChannelStats;
+  recent_logs: RecentCommunicationLogItem[];
+  metadata: {
+    calls_note: string;
+    email_note: string;
+    whatsapp_note: string;
+  };
+}
+
+export interface FollowupQueueItem {
+  id: number;
+  lead_id: number;
+  lead_code: string;
+  name: string;
+  lead_name: string;
+  phone: string;
+  email: string;
+  due_date: string;
+  stage_id: number | null;
+  stage_name: string;
+  priority: string;
+  assigned_employee_id: number | null;
+  assigned_employee_name: string;
+  is_overdue: boolean;
+  is_today?: boolean;
+}
+
+export interface FollowupQueue {
+  due_today: number;
+  overdue: number;
+  next_7_days: number;
+  no_followup_scheduled: number;
+  action_table: FollowupQueueItem[];
+}
+
+export interface AttentionRequired {
+  overdue_followups: number;
+  unassigned_leads: number;
+  stale_leads: number;
+  no_next_followup: number;
+  missing_financials: number;
+  outstanding_balances: number;
+  failed_communications: number;
+  inactive_user_leads: number;
+}
+
+export interface SystemHealthService {
+  status: string;
+  is_ready: boolean;
+  note?: string;
+  host?: string;
+  port?: number;
+}
+
+export interface SystemHealthReports {
+  active_schedules_count: number;
+  last_run_at: string | null;
+  status: string;
+}
+
+export interface SystemHealthDataIntegrity {
+  pending_closure_missing_financials: number;
+  unassigned_leads: number;
+  inactive_user_assignments: number;
+}
+
+export interface SystemHealth {
+  email_smtp: SystemHealthService;
+  whatsapp: SystemHealthService;
+  callyzer: SystemHealthService;
+  reports_scheduler: SystemHealthReports;
+  data_integrity: SystemHealthDataIntegrity;
+}
+
+export interface DashboardFiltersState {
+  preset?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  team_id?: number | string | null;
+  employee_id?: number | string | null;
+  stage_id?: number | string | null;
+  source?: string | null;
+  channel?: string | null;
+  search?: string;
 }
 
 export interface TeamOverviewStat {
+  id?: number;
   team_id: number;
+  name?: string;
   team_name: string;
   manager_name: string;
+  members_count?: number;
   total_leads: number;
   assigned_leads: number;
   unassigned_leads: number;
   enrolled_leads: number;
   lost_leads: number;
+  pending_closure_leads?: number;
   pending_followups: number;
+  overdue_followups?: number;
+  placement_fees?: number;
   total_placement_fees: number;
+  estimated_revenue?: number;
+  total_estimated_revenue?: number;
+  total_agreed_amount?: number;
+  total_outstanding_balance?: number;
+  conversion_rate?: number;
 }
 
 export interface MemberPerformanceStat {
   id: number;
   name: string;
   username: string;
+  full_name?: string;
+  email?: string;
+  role?: string;
+  team_id?: number | null;
   team_name: string;
   assigned_leads: number;
   enrolled_leads: number;
   lost_leads: number;
+  pending_closure_leads?: number;
+  pending_followups: number;
+  overdue_followups?: number;
+  completed_followups?: number;
+  pipeline_value?: number;
+  placement_fees?: number;
+  total_placement_fees?: number;
   recorded_calls: number;
   recorded_messages: number;
-  completed_followups: number;
-  stage_summary: { stage_name: string; count: number }[];
+  emails_attempted?: number;
+  whatsapp_attempted?: number;
+  total_agreed_amount?: number;
+  total_outstanding_balance?: number;
+  conversion_rate?: number;
+  conversion_rate_formula?: string;
+  stage_summary?: { stage_name: string; count: number }[];
 }
 
 export interface FollowupMonitoringItem {
+  id?: number;
   lead_id: number;
   lead_code: string;
+  name?: string;
   lead_name: string;
   phone: string;
+  email?: string;
+  assigned_employee_id?: number | null;
   assigned_employee_name: string;
   due_date: string;
+  stage_id?: number | null;
   stage_name: string;
   priority: string;
   is_overdue: boolean;
+  is_today?: boolean;
 }
 
 export interface RecentActivityItem {
   id: string | number;
   type: string;
-  lead_id: number | null;
-  lead_name: string;
+  lead_id?: number | null;
+  lead_name?: string;
   title: string;
   description: string;
-  user: string;
+  actor?: string;
+  user?: string;
   timestamp: string;
 }
 
 export interface DashboardStats {
   role: UserRole;
   days_filter?: number | null;
+  filters?: DashboardFiltersState;
+  current_date?: string;
   kpis: DashboardKPIs;
+  pending_closure_financials?: PendingClosureFinancials;
   pipeline_overview: PipelineStageStat[];
+  communications_activity?: CommunicationsActivity;
+  followup_queue?: FollowupQueue;
+  attention_required?: AttentionRequired;
   team_overview?: TeamOverviewStat[];
   member_performance?: MemberPerformanceStat[];
+  followup_list?: FollowupQueueItem[];
   followup_monitoring?: FollowupMonitoringItem[];
   recent_activity?: RecentActivityItem[];
+  system_health?: SystemHealth | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -565,5 +823,72 @@ export interface LeadImportBatchRecord {
   created_at: string;
   created_by_name: string;
 }
+
+export interface TemplatePreviewResponse {
+  subject: string;
+  body: string;
+  unresolved_placeholders: string[];
+  available_placeholders: Record<string, string>;
+  sample_data: Record<string, string>;
+}
+
+export type NotificationType =
+  | 'TASK_DUE'
+  | 'PAYMENT_DUE'
+  | 'LEAD_ASSIGNED'
+  | 'MEETING_SCHEDULED'
+  | 'MISSED_CALL'
+  | 'STAGE_CHANGED'
+  | 'SYSTEM_ALERT'
+  | 'GENERAL';
+
+export type NotificationPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+
+export interface Notification {
+  id: string; // UUID
+  recipient: number;
+  type: NotificationType;
+  title: string;
+  message: string;
+  entity_type?: string | null;
+  entity_id?: string | null;
+  action_url?: string | null;
+  priority: NotificationPriority;
+  read_at?: string | null;
+  archived_at?: string | null;
+  deduplication_key?: string | null;
+  created_at: string;
+  expires_at?: string | null;
+}
+
+export interface UnreadCountResponse {
+  unread_count: number;
+}
+
+export interface MarkAllReadResponse {
+  updated_count: number;
+}
+
+export interface NotificationListParams {
+  page?: number;
+  page_size?: number;
+  unread_only?: boolean;
+  type?: NotificationType;
+  priority?: NotificationPriority;
+  archived?: 'active' | 'archived' | 'all';
+  ordering?: string;
+}
+
+export type NotificationFilterCategory =
+  | 'all'
+  | 'unread'
+  | 'leads'
+  | 'tasks'
+  | 'calls'
+  | 'meetings'
+  | 'payments'
+  | 'system'
+  | 'archived';
+
 
 

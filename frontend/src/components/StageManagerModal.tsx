@@ -44,23 +44,23 @@ export const StageManagerModal: React.FC<StageManagerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
-      <div className="crm-card bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col max-h-[85vh] relative">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
+      <div className="crm-card bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col max-h-[85vh] relative">
         {/* Header */}
-        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+        <div className="p-4 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between bg-[#F8FAFC] dark:bg-[#111827]">
           <div>
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-              <Settings2 className="w-4 h-4 text-[#2563EB]" />
+            <h3 className="text-sm font-bold text-[#0F172A] dark:text-slate-100 flex items-center gap-2">
+              <Settings2 className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
               Pipeline Stage Configuration
             </h3>
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-[#64748B] dark:text-slate-400">
               Extensible 12-stage configuration (names are provided per administrator setup)
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#EFF6FF] rounded-lg transition cursor-pointer"
+            className="p-1.5 text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-100 hover:bg-[#EFF6FF] dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -69,8 +69,8 @@ export const StageManagerModal: React.FC<StageManagerModalProps> = ({
         {/* Content */}
         <div className="p-5 space-y-4 flex-1 overflow-y-auto scrollbar-thin">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-[#DC2626] flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" />
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl text-xs text-[#DC2626] dark:text-red-400 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626] dark:text-red-400" />
               <span>{error}</span>
             </div>
           )}
@@ -87,23 +87,23 @@ export const StageManagerModal: React.FC<StageManagerModalProps> = ({
           )}
 
           {isCreating && (
-            <form onSubmit={handleCreate} className="p-4 crm-card border border-[#E2E8F0] bg-[#F8FAFC] rounded-xl space-y-3">
-              <h4 className="text-xs font-semibold text-[#0F172A]">New Stage</h4>
+            <form onSubmit={handleCreate} className="p-4 crm-card border border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-slate-900/50 rounded-xl space-y-3">
+              <h4 className="text-xs font-semibold text-[#0F172A] dark:text-slate-100">New Stage</h4>
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
-                  <label className="block text-xs font-medium text-[#0F172A] mb-1">Stage Name *</label>
+                  <label className="block text-xs font-medium text-[#0F172A] dark:text-slate-200 mb-1">Stage Name *</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
                     placeholder="Enter stage name..."
-                    className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-1.5 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition"
+                    className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-slate-700 rounded-xl px-3 py-1.5 text-[#0F172A] dark:text-slate-100 placeholder-[#94A3B8] dark:placeholder-slate-500 focus:outline-none focus:border-[#2563EB] dark:focus:border-blue-500 transition"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#0F172A] mb-1">Order (1-12) *</label>
+                  <label className="block text-xs font-medium text-[#0F172A] dark:text-slate-200 mb-1">Order (1-12) *</label>
                   <input
                     type="number"
                     min="1"
@@ -111,7 +111,7 @@ export const StageManagerModal: React.FC<StageManagerModalProps> = ({
                     value={order}
                     onChange={(e) => setOrder(Number(e.target.value))}
                     required
-                    className="w-full text-xs bg-white border border-[#E2E8F0] rounded-xl px-3 py-1.5 text-[#0F172A] font-mono focus:outline-none focus:border-[#2563EB] transition"
+                    className="w-full text-xs bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-slate-700 rounded-xl px-3 py-1.5 text-[#0F172A] dark:text-slate-100 font-mono focus:outline-none focus:border-[#2563EB] dark:focus:border-blue-500 transition"
                   />
                 </div>
               </div>
@@ -120,7 +120,7 @@ export const StageManagerModal: React.FC<StageManagerModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsCreating(false)}
-                  className="crm-btn-secondary px-3 py-1.5 rounded-xl text-xs font-medium text-[#0F172A] cursor-pointer"
+                  className="crm-btn-secondary px-3 py-1.5 rounded-xl text-xs font-medium text-[#0F172A] dark:text-slate-200 dark:bg-slate-800 dark:border-slate-700 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -135,12 +135,12 @@ export const StageManagerModal: React.FC<StageManagerModalProps> = ({
           )}
 
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-[#0F172A]">
+            <h4 className="text-xs font-semibold text-[#0F172A] dark:text-slate-100">
               Configured Stages ({stages.length}/12)
             </h4>
 
             {stages.length === 0 ? (
-              <p className="text-xs text-[#64748B] italic">
+              <p className="text-xs text-[#64748B] dark:text-slate-400 italic">
                 No stages currently configured. Per requirements, stage names are not assumed or hardcoded.
               </p>
             ) : (
@@ -148,13 +148,13 @@ export const StageManagerModal: React.FC<StageManagerModalProps> = ({
                 {stages.map((st) => (
                   <div
                     key={st.id}
-                    className="p-3 crm-card border border-[#E2E8F0] bg-white rounded-xl flex items-center justify-between text-xs shadow-xs"
+                    className="p-3 crm-card border border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-slate-900/50 rounded-xl flex items-center justify-between text-xs shadow-xs"
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className="w-5 h-5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[11px] font-mono font-bold text-[#2563EB] flex items-center justify-center">
+                      <span className="w-5 h-5 rounded-full bg-[#EFF6FF] dark:bg-blue-950/40 border border-[#BFDBFE] dark:border-blue-900/50 text-[11px] font-mono font-bold text-[#2563EB] dark:text-blue-400 flex items-center justify-center">
                         {st.order}
                       </span>
-                      <span className="font-semibold text-[#0F172A]">{st.name}</span>
+                      <span className="font-semibold text-[#0F172A] dark:text-slate-200">{st.name}</span>
                     </div>
                     <span className="crm-pill crm-pill-success text-[10px] font-mono">Active</span>
                   </div>
@@ -165,11 +165,11 @@ export const StageManagerModal: React.FC<StageManagerModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-[#E2E8F0] bg-[#F8FAFC] flex justify-end">
+        <div className="p-3 border-t border-[#E2E8F0] dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#111827] flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="crm-btn-secondary px-3.5 py-1.5 rounded-xl text-xs font-medium text-[#0F172A] transition cursor-pointer"
+            className="crm-btn-secondary px-3.5 py-1.5 rounded-xl text-xs font-medium text-[#0F172A] dark:text-slate-200 dark:bg-slate-800 dark:border-slate-700 transition cursor-pointer"
           >
             Close
           </button>

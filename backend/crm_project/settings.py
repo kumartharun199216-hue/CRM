@@ -3,6 +3,25 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+def _load_env_file(filepath):
+    if filepath.is_file():
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#') or '=' not in line:
+                        continue
+                    k, v = line.split('=', 1)
+                    k = k.strip()
+                    v = v.strip().strip("'\"")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+        except Exception:
+            pass
+
+_load_env_file(BASE_DIR.parent / '.env')
+_load_env_file(BASE_DIR / '.env')
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'crm-insecure-secret-key-for-dev-change-in-production')
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
@@ -29,6 +48,7 @@ INSTALLED_APPS = [
     'apps.communications',
     'apps.reports',
     'apps.audit',
+    'apps.notifications',
 ]
 
 MIDDLEWARE = [
@@ -66,7 +86,15 @@ WSGI_APPLICATION = 'crm_project.wsgi.application'
 # Database configuration: defaults to Postgres if configured, falls back to SQLite for local development/testing without docker
 DB_ENGINE = os.environ.get('DB_ENGINE', 'postgres' if os.environ.get('POSTGRES_DB') else 'sqlite')
 
+postgres_available = False
 if DB_ENGINE == 'postgres':
+    try:
+        import psycopg  # noqa: F401
+        postgres_available = True
+    except Exception:
+        postgres_available = False
+
+if DB_ENGINE == 'postgres' and postgres_available:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -111,6 +139,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
@@ -134,14 +165,27 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+CELERY_BEAT_SCHEDULE = {
+    'sync-callyzer-calls-every-5-minutes': {
+        'task': 'apps.communications.tasks.sync_callyzer_call_history_task',
+        'schedule': 300.0,  # Run every 5 minutes
+    },
+    'check-upcoming-followups-every-5-minutes': {
+        'task': 'apps.notifications.tasks.check_upcoming_followups_task',
+        'schedule': 300.0,  # Run every 5 minutes
+    },
+}
+
 # Google SMTP Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 't')
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@crm.local')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', f'Skill Move CRM <{EMAIL_HOST_USER}>' if EMAIL_HOST_USER else 'noreply@crm.local')
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 30))
 
 # WhatsApp Business Platform Configuration
 WHATSAPP_API_TOKEN = os.environ.get('WHATSAPP_API_TOKEN', '')
@@ -150,3 +194,6 @@ WHATSAPP_BUSINESS_ACCOUNT_ID = os.environ.get('WHATSAPP_BUSINESS_ACCOUNT_ID', ''
 
 # Callyzer Calling Integration Configuration
 CALLYZER_API_KEY = os.environ.get('CALLYZER_API_KEY', '')
+CALLYZER_BASE_URL = os.environ.get('CALLYZER_BASE_URL', 'https://sandbox.api.callyzer.co/api/v2.1').rstrip('/')
+CALLYZER_DEVICE_CONNECT_CODE = os.environ.get('CALLYZER_DEVICE_CONNECT_CODE', '')
+CALLYZER_WEBHOOK_SECRET = os.environ.get('CALLYZER_WEBHOOK_SECRET', '')

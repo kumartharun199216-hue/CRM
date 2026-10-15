@@ -54,8 +54,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Provisioned Manager: manager@skillmove.com"))
 
         # 3. COUNSELLOR: counsellor@skillmove.com / ADmin@123 (SALES_EMPLOYEE role)
-        # Note: also updates legacy spelling councellor@skillmove.com if present
-        for username in ["counsellor@skillmove.com", "councellor@skillmove.com"]:
+        for username in ["counsellor@skillmove.com"]:
             counsellor, _ = User.objects.get_or_create(
                 username=username,
                 defaults={"email": username, "role": UserRole.SALES_EMPLOYEE, "team": team}

@@ -1,43 +1,145 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 :root {
+  /* Brand Tokens */
+  --brand-primary: #2563EB;
+  --brand-primary-hover: #1D4ED8;
+  --brand-primary-active: #1E40AF;
+  --brand-secondary: #7C3AED;
+  --brand-secondary-hover: #6D28D9;
+  --brand-accent: #06B6D4;
+  --brand-success: #16A34A;
+  --brand-warning: #D97706;
+  --brand-danger: #DC2626;
+  --brand-info: #0284C7;
+
+  /* Light Theme Surface & Text Tokens */
+  --app-bg: #F5F7FB;
+  --content-bg: #F8FAFC;
+  --sidebar-bg: #FFFFFF;
+  --topnav-bg: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --card-elevated-bg: #FFFFFF;
+  --input-bg: #FFFFFF;
+  --primary-text: #0F172A;
+  --secondary-text: #475569;
+  --muted-text: #64748B;
+  --placeholder-text: #94A3B8;
+  --border-color: #E2E8F0;
+  --divider-color: #F1F5F9;
+  --hover-bg: #F1F5F9;
+  --selected-bg: #EFF6FF;
+  --selected-border: #2563EB;
+
+  /* Backward compatibility alias variables */
   --primary-blue: #2563EB;
   --dark-blue: #1E3A8A;
   --light-blue: #EFF6FF;
   --white: #FFFFFF;
   --primary-purple: #7C3AED;
   --light-purple: #F3E8FF;
-  --main-bg: #F8FAFC;
-  --primary-text: #0F172A;
-  --secondary-text: #64748B;
+  --main-bg: #F5F7FB;
   --borders: #E2E8F0;
   --success: #16A34A;
   --warning: #D97706;
   --error: #DC2626;
+
+  /* Status Tokens */
+  --status-won-bg: #DCFCE7;
+  --status-won-text: #166534;
+  --status-won-border: #BBF7D0;
+  --status-pending-bg: #FEF3C7;
+  --status-pending-text: #92400E;
+  --status-pending-border: #FDE68A;
+  --status-lost-bg: #FEE2E2;
+  --status-lost-text: #991B1B;
+  --status-lost-border: #FECACA;
+  --status-info-bg: #DBEAFE;
+  --status-info-text: #1D4ED8;
+  --status-info-border: #BFDBFE;
+  --status-neutral-bg: #F1F5F9;
+  --status-neutral-text: #475569;
+  --status-neutral-border: #E2E8F0;
+  --status-progress-bg: #EDE9FE;
+  --status-progress-text: #5B21B6;
+  --status-progress-border: #DDD6FE;
+}
+
+.dark {
+  /* Dark Theme Surface & Text Tokens */
+  --app-bg: #0B1120;
+  --content-bg: #0F172A;
+  --sidebar-bg: #0B1120;
+  --topnav-bg: #111827;
+  --card-bg: #172033;
+  --card-elevated-bg: #1E293B;
+  --input-bg: #111827;
+  --primary-text: #F8FAFC;
+  --secondary-text: #CBD5E1;
+  --muted-text: #94A3B8;
+  --placeholder-text: #64748B;
+  --border-color: #334155;
+  --divider-color: #273449;
+  --hover-bg: #1E293B;
+  --selected-bg: #172554;
+  --selected-border: #60A5FA;
+
+  /* Backward compatibility alias variables */
+  --white: #172033;
+  --main-bg: #0B1120;
+  --borders: #334155;
+  --light-blue: #172554;
+  --light-purple: #3B0764;
+  --dark-blue: #60A5FA;
+
+  /* Status Tokens (Dark Mode) */
+  --status-won-bg: #14532D;
+  --status-won-text: #86EFAC;
+  --status-won-border: #166534;
+  --status-pending-bg: #78350F;
+  --status-pending-text: #FDE68A;
+  --status-pending-border: #92400E;
+  --status-lost-bg: #7F1D1D;
+  --status-lost-text: #FCA5A5;
+  --status-lost-border: #991B1B;
+  --status-info-bg: #1E3A8A;
+  --status-info-text: #93C5FD;
+  --status-info-border: #1D4ED8;
+  --status-neutral-bg: #1E293B;
+  --status-neutral-text: #CBD5E1;
+  --status-neutral-border: #334155;
+  --status-progress-bg: #4C1D95;
+  --status-progress-text: #D8B4FE;
+  --status-progress-border: #6D28D9;
 }
 
 body {
-  background-color: var(--main-bg);
+  background-color: var(--app-bg);
   color: var(--primary-text);
   font-family: var(--font-sans);
   min-height: 100vh;
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* CRM Cards */
 .crm-card,
 .linear-card {
-  background-color: #FFFFFF;
-  border: 1px solid var(--borders);
+  background-color: var(--card-bg);
+  color: var(--primary-text);
+  border: 1px solid var(--border-color);
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .crm-card-interactive,
@@ -46,7 +148,7 @@ body {
 }
 .crm-card-interactive:hover,
 .linear-card-interactive:hover {
-  border-color: #93C5FD;
+  border-color: #3B82F6;
   box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
   transform: translateY(-1px);
 }
@@ -60,7 +162,7 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #2563EB 0%, #1E3A8A 100%);
+  background: linear-gradient(90deg, #2563EB 0%, #1D4ED8 100%);
   border-top-left-radius: 0.75rem;
   border-top-right-radius: 0.75rem;
 }
@@ -73,7 +175,7 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #7C3AED 0%, #A855F7 100%);
+  background: linear-gradient(90deg, #7C3AED 0%, #9333EA 100%);
   border-top-left-radius: 0.75rem;
   border-top-right-radius: 0.75rem;
 }
@@ -104,10 +206,10 @@ body {
   border-top-right-radius: 0.75rem;
 }
 
-/* Buttons */
+/* Button System */
 .crm-btn-primary,
 .linear-btn-primary {
-  background-color: var(--primary-blue);
+  background-color: var(--brand-primary);
   color: #FFFFFF;
   border: 1px solid transparent;
   box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.2);
@@ -115,45 +217,45 @@ body {
 }
 .crm-btn-primary:hover:not(:disabled),
 .linear-btn-primary:hover:not(:disabled) {
-  background-color: #1D4ED8;
+  background-color: var(--brand-primary-hover);
   box-shadow: 0 2px 6px 0 rgba(37, 99, 235, 0.35);
   transform: translateY(-0.5px);
 }
 .crm-btn-primary:active:not(:disabled),
 .linear-btn-primary:active:not(:disabled) {
-  background-color: var(--dark-blue);
+  background-color: var(--brand-primary-active);
   transform: translateY(0);
 }
 
 .crm-btn-secondary,
 .linear-btn-secondary {
-  background-color: #FFFFFF;
+  background-color: var(--card-bg);
   color: var(--primary-text);
-  border: 1px solid var(--borders);
+  border: 1px solid var(--border-color);
   box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
   transition: all 0.15s ease-in-out;
 }
 .crm-btn-secondary:hover:not(:disabled),
 .linear-btn-secondary:hover:not(:disabled) {
-  background-color: #F8FAFC;
-  border-color: #CBD5E1;
-  color: #0F172A;
+  background-color: var(--hover-bg);
+  border-color: var(--border-color);
+  color: var(--primary-text);
 }
 
 .crm-btn-purple {
-  background-color: var(--primary-purple);
+  background-color: var(--brand-secondary);
   color: #FFFFFF;
   border: 1px solid transparent;
   box-shadow: 0 1px 2px 0 rgba(124, 58, 237, 0.2);
   transition: all 0.15s ease-in-out;
 }
 .crm-btn-purple:hover:not(:disabled) {
-  background-color: #6D28D9;
+  background-color: var(--brand-secondary-hover);
   box-shadow: 0 2px 6px 0 rgba(124, 58, 237, 0.35);
 }
 
 .linear-btn-emerald {
-  background-color: var(--success);
+  background-color: var(--brand-success);
   color: #FFFFFF;
   border: 1px solid transparent;
   transition: all 0.15s ease-in-out;
@@ -163,7 +265,7 @@ body {
 }
 
 .linear-btn-amber {
-  background-color: var(--warning);
+  background-color: var(--brand-warning);
   color: #FFFFFF;
   border: 1px solid transparent;
   transition: all 0.15s ease-in-out;
@@ -172,7 +274,7 @@ body {
   background-color: #B45309;
 }
 
-/* Badges / Pills */
+/* Badges / Status Pills */
 .linear-pill,
 .crm-pill {
   font-family: var(--font-sans);
@@ -184,34 +286,35 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  transition: all 0.15s ease;
 }
 
 .linear-pill-indigo,
 .crm-pill-blue {
-  background-color: var(--light-blue);
-  border: 1px solid #BFDBFE;
-  color: var(--primary-blue);
+  background-color: var(--status-info-bg);
+  border: 1px solid var(--status-info-border);
+  color: var(--status-info-text);
 }
 
 .linear-pill-purple,
 .crm-pill-purple {
-  background-color: var(--light-purple);
-  border: 1px solid #E9D5FF;
-  color: var(--primary-purple);
+  background-color: var(--status-progress-bg);
+  border: 1px solid var(--status-progress-border);
+  color: var(--status-progress-text);
 }
 
 .linear-pill-emerald,
 .crm-pill-success {
-  background-color: #DCFCE7;
-  border: 1px solid #BBF7D0;
-  color: var(--success);
+  background-color: var(--status-won-bg);
+  border: 1px solid var(--status-won-border);
+  color: var(--status-won-text);
 }
 
 .linear-pill-amber,
 .crm-pill-warning {
-  background-color: #FEF3C7;
-  border: 1px solid #FDE68A;
-  color: var(--warning);
+  background-color: var(--status-pending-bg);
+  border: 1px solid var(--status-pending-border);
+  color: var(--status-pending-text);
 }
 
 .linear-pill-cyan,
@@ -220,11 +323,17 @@ body {
   border: 1px solid #BAE6FD;
   color: #0284C7;
 }
+.dark .linear-pill-cyan,
+.dark .crm-pill-cyan {
+  background-color: #082F49;
+  border: 1px solid #0369A1;
+  color: #7DD3FC;
+}
 
 .crm-pill-error {
-  background-color: #FEE2E2;
-  border: 1px solid #FECACA;
-  color: var(--error);
+  background-color: var(--status-lost-bg);
+  border: 1px solid var(--status-lost-border);
+  color: var(--status-lost-text);
 }
 
 /* Typography Headings */
@@ -235,15 +344,15 @@ body {
 }
 
 .linear-text-brand {
-  color: var(--dark-blue);
+  color: var(--brand-primary);
   font-weight: 800;
 }
 
 /* Table Styles */
 .crm-table-header,
 .linear-table-header {
-  background-color: #F8FAFC;
-  border-bottom: 1px solid var(--borders);
+  background-color: var(--content-bg);
+  border-bottom: 1px solid var(--border-color);
   color: var(--secondary-text);
 }
 
@@ -253,7 +362,28 @@ body {
 }
 .crm-table-row:hover,
 .linear-table-row:hover {
-  background-color: #F1F5F9;
+  background-color: var(--hover-bg);
+}
+
+/* Form Input Controls */
+.crm-input {
+  height: 40px;
+  border-radius: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.875rem;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--primary-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.crm-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+.crm-input::placeholder {
+  color: var(--placeholder-text);
 }
 
 /* Custom Scrollbars */
@@ -262,13 +392,13 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: var(--divider-color);
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: var(--placeholder-text);
   border-radius: 9999px;
   transition: background 0.2s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: var(--muted-text);
 }

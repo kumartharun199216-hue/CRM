@@ -84,19 +84,19 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
   return (
     <div className="space-y-1.5 w-full" ref={containerRef}>
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-[#0F172A]">
+        <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
           {label}
           <span className="text-[#2563EB] ml-1">*</span>
         </label>
         {selectedEmployeeIds.length > 0 && !disabled && (
-          <span className="text-[11px] font-medium text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-full border border-[#BFDBFE]">
+          <span className="text-[11px] font-medium text-[#2563EB] dark:text-[#60A5FA] bg-[#EFF6FF] dark:bg-[#172554] px-2 py-0.5 rounded-full border border-[#BFDBFE] dark:border-[#1E40AF]">
             {selectedEmployeeIds.length} {selectedEmployeeIds.length === 1 ? 'employee' : 'employees'} selected
           </span>
         )}
       </div>
 
       {helperText && (
-        <p className="text-[11px] text-[#64748B] m-0">{helperText}</p>
+        <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">{helperText}</p>
       )}
 
       {/* Main Select Box / Chip Container */}
@@ -119,14 +119,14 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
             setIsOpen(false);
           }
         }}
-        className={`w-full min-h-[42px] px-2.5 py-1.5 bg-white border rounded-lg text-xs transition flex flex-wrap items-center gap-1.5 cursor-pointer relative ${
+        className={`w-full min-h-[42px] px-2.5 py-1.5 bg-white dark:bg-[#111827] border rounded-lg text-xs transition flex flex-wrap items-center gap-1.5 cursor-pointer relative ${
           disabled
-            ? 'bg-[#F8FAFC] border-[#E2E8F0] opacity-60 cursor-not-allowed'
+            ? 'bg-[#F8FAFC] dark:bg-[#111827]/50 border-[#E2E8F0] dark:border-[#334155] opacity-60 cursor-not-allowed'
             : isOpen
             ? 'border-[#2563EB] ring-2 ring-[#2563EB]/15'
             : error
             ? 'border-[#DC2626] ring-1 ring-[#DC2626]/20'
-            : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
+            : 'border-[#E2E8F0] dark:border-[#334155] hover:border-[#CBD5E1] dark:hover:border-[#475569]'
         }`}
       >
         {/* Selected Chips */}
@@ -134,7 +134,7 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
           selectedEmployees.map((emp) => (
             <span
               key={emp.id}
-              className="inline-flex items-center gap-1.5 px-2 py-0.75 bg-[#EFF6FF] text-[#1E3A8A] border border-[#BFDBFE] rounded-md text-[11px] font-medium shadow-2xs group"
+              className="inline-flex items-center gap-1.5 px-2 py-0.75 bg-[#EFF6FF] dark:bg-[#172554] text-[#1E3A8A] dark:text-[#93C5FD] border border-[#BFDBFE] dark:border-[#1E40AF] rounded-md text-[11px] font-medium shadow-2xs group"
             >
               <span className="w-4 h-4 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-[9px] font-bold">
                 {getDisplayName(emp).charAt(0).toUpperCase()}
@@ -144,7 +144,7 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
                 <button
                   type="button"
                   onClick={(e) => handleRemoveChip(e, emp.id)}
-                  className="text-[#64748B] hover:text-[#DC2626] rounded-full p-0.5 transition"
+                  className="text-[#64748B] dark:text-[#94A3B8] hover:text-[#DC2626] dark:hover:text-[#F87171] rounded-full p-0.5 transition"
                   title={`Remove ${getDisplayName(emp)}`}
                 >
                   <X className="w-3 h-3" />
@@ -153,8 +153,8 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
             </span>
           ))
         ) : (
-          <span className="text-[#94A3B8] text-xs px-1 select-none flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-[#94A3B8]" />
+          <span className="text-[#94A3B8] dark:text-[#64748B] text-xs px-1 select-none flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-[#94A3B8] dark:text-[#64748B]" />
             {loading ? 'Loading eligible employees...' : 'Search and select employees to assign leads...'}
           </span>
         )}
@@ -164,7 +164,7 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
             <button
               type="button"
               onClick={handleClearAll}
-              className="text-[10px] text-[#64748B] hover:text-[#DC2626] font-medium px-1.5 py-0.5 rounded hover:bg-[#FEF2F2] transition mr-1"
+              className="text-[10px] text-[#64748B] dark:text-[#94A3B8] hover:text-[#DC2626] dark:hover:text-[#F87171] font-medium px-1.5 py-0.5 rounded hover:bg-[#FEF2F2] dark:hover:bg-[#450A0A]/40 transition mr-1"
               title="Clear all selections"
             >
               Clear
@@ -176,17 +176,17 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
       {/* Dropdown Menu */}
       {isOpen && !disabled && (
         <div className="relative z-50">
-          <div className="absolute top-1 left-0 right-0 bg-white border border-[#CBD5E1] rounded-xl shadow-xl overflow-hidden animate-in fade-in-50 duration-150">
+          <div className="absolute top-1 left-0 right-0 bg-white dark:bg-[#172033] border border-[#CBD5E1] dark:border-[#334155] rounded-xl shadow-xl overflow-hidden animate-in fade-in-50 duration-150">
             {/* Search Header */}
-            <div className="p-2 border-b border-[#E2E8F0] bg-[#F8FAFC] flex items-center gap-2">
-              <Search className="w-4 h-4 text-[#64748B] shrink-0" />
+            <div className="p-2 border-b border-[#E2E8F0] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#111827] flex items-center gap-2">
+              <Search className="w-4 h-4 text-[#64748B] dark:text-[#94A3B8] shrink-0" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search eligible employees by name or email..."
-                className="w-full bg-transparent text-xs text-[#0F172A] placeholder-[#94A3B8] outline-none"
+                className="w-full bg-transparent text-xs text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] dark:placeholder-[#64748B] outline-none"
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') {
@@ -198,7 +198,7 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
-                  className="text-[#64748B] hover:text-[#0F172A] p-0.5"
+                  className="text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] p-0.5"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -206,7 +206,7 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
             </div>
 
             {/* Quick Actions Bar */}
-            <div className="px-3 py-1.5 bg-[#F1F5F9]/70 border-b border-[#E2E8F0] flex items-center justify-between text-[11px] text-[#64748B]">
+            <div className="px-3 py-1.5 bg-[#F1F5F9]/70 dark:bg-[#1E293B]/70 border-b border-[#E2E8F0] dark:border-[#334155] flex items-center justify-between text-[11px] text-[#64748B] dark:text-[#94A3B8]">
               <span>
                 {filteredEmployees.length} {filteredEmployees.length === 1 ? 'employee' : 'employees'} available
               </span>
@@ -214,7 +214,7 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
                 <button
                   type="button"
                   onClick={handleSelectAll}
-                  className="font-medium text-[#2563EB] hover:text-[#1E3A8A] cursor-pointer"
+                  className="font-medium text-[#2563EB] dark:text-[#60A5FA] hover:text-[#1E3A8A] dark:hover:text-[#93C5FD] cursor-pointer"
                 >
                   Select All
                 </button>
@@ -222,7 +222,7 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
                 <button
                   type="button"
                   onClick={handleClearAll}
-                  className="font-medium text-[#64748B] hover:text-[#DC2626] cursor-pointer"
+                  className="font-medium text-[#64748B] dark:text-[#94A3B8] hover:text-[#DC2626] dark:hover:text-[#F87171] cursor-pointer"
                 >
                   Clear All
                 </button>
@@ -230,13 +230,13 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
             </div>
 
             {/* Employee List */}
-            <div className="max-h-56 overflow-y-auto p-1 divide-y divide-[#F1F5F9]">
+            <div className="max-h-56 overflow-y-auto p-1 divide-y divide-[#F1F5F9] dark:divide-[#334155]">
               {loading ? (
-                <div className="p-4 text-center text-xs text-[#64748B]">
+                <div className="p-4 text-center text-xs text-[#64748B] dark:text-[#94A3B8]">
                   Loading eligible employees...
                 </div>
               ) : filteredEmployees.length === 0 ? (
-                <div className="p-4 text-center text-xs text-[#64748B] space-y-1">
+                <div className="p-4 text-center text-xs text-[#64748B] dark:text-[#94A3B8] space-y-1">
                   <UserCheck className="w-6 h-6 mx-auto text-[#94A3B8]" />
                   <p className="font-medium m-0">No eligible employees found</p>
                   <p className="text-[10px] text-[#94A3B8] m-0">
@@ -253,8 +253,8 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
                       onClick={() => handleToggleEmployee(emp.id)}
                       className={`flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer text-xs transition ${
                         isSelected
-                          ? 'bg-[#EFF6FF] text-[#1E3A8A] font-semibold'
-                          : 'hover:bg-[#F8FAFC] text-[#0F172A]'
+                          ? 'bg-[#EFF6FF] dark:bg-[#172554] text-[#1E3A8A] dark:text-[#93C5FD] font-semibold'
+                          : 'hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC]'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -262,14 +262,14 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
                           className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                             isSelected
                               ? 'bg-[#2563EB] text-white shadow-xs'
-                              : 'bg-[#E2E8F0] text-[#475569]'
+                              : 'bg-[#E2E8F0] dark:bg-[#334155] text-[#475569] dark:text-[#CBD5E1]'
                           }`}
                         >
                           {displayName.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
                           <div className="truncate font-medium">{displayName}</div>
-                          <div className="text-[10px] text-[#64748B] truncate">
+                          <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] truncate">
                             {emp.email || `@${emp.username}`}
                             {emp.team_name ? ` · Team: ${emp.team_name}` : ''}
                           </div>
@@ -280,7 +280,7 @@ export const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> =
                         className={`w-4 h-4 rounded border flex items-center justify-center transition shrink-0 ${
                           isSelected
                             ? 'bg-[#2563EB] border-[#2563EB] text-white'
-                            : 'border-[#CBD5E1] bg-white'
+                            : 'border-[#CBD5E1] dark:border-[#475569] bg-white dark:bg-[#111827]'
                         }`}
                       >
                         {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
