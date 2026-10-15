@@ -17,9 +17,12 @@ import {
   UserCircle,
   Building,
   Mail,
+  PhoneCall,
+  Bell,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
 
 interface SidebarProps {
   user: User;
@@ -77,6 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen = false,
   onCloseMobile,
 }) => {
+  const { unreadCount } = useNotifications();
   const isPipelineActive = activeView === 'spreadsheet' || activeView === 'kanban';
   const [isPipelineExpanded, setIsPipelineExpanded] = useState(Boolean(selectedStageId));
   const [internalCollapsed, setInternalCollapsed] = useState(false);
@@ -262,6 +266,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   ) : null}
                 </button>
               )}
+
+              {/* Call History (Callyzer Telephony) */}
+              <button
+                type="button"
+                id="sidebar-call-history-nav-item"
+                onClick={() => {
+                  onViewChange('calls');
+                  onCloseMobile?.();
+                }}
+                title={isCollapsed ? 'Call History' : undefined}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-3'
+                  } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeView === 'calls'
+                    ? 'bg-[#2563EB] text-white shadow-xs'
+                    : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+              >
+                <PhoneCall className={`w-4 h-4 shrink-0 ${activeView === 'calls' ? 'text-white' : 'text-emerald-600 dark:text-emerald-400'}`} />
+                {!isCollapsed && <span className="truncate">Call History</span>}
+              </button>
+
+              {/* Notifications Center */}
+              <button
+                type="button"
+                id="sidebar-notifications-nav-item"
+                onClick={() => {
+                  onViewChange('notifications');
+                  onCloseMobile?.();
+                }}
+                title={isCollapsed ? (unreadCount > 0 ? `Notifications (${unreadCount})` : 'Notifications') : undefined}
+                className={`w-full flex items-center relative ${isCollapsed ? 'justify-center px-2' : 'justify-between px-3'
+                  } py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeView === 'notifications'
+                    ? 'bg-[#2563EB] text-white shadow-xs'
+                    : 'text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]'
+                  }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Bell className={`w-4 h-4 shrink-0 ${activeView === 'notifications' ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`} />
+                  {!isCollapsed && <span className="truncate">Notifications</span>}
+                </div>
+                {!isCollapsed && unreadCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#DC2626] text-white leading-none flex items-center justify-center min-w-[18px] h-[18px]">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+                {isCollapsed && unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#DC2626]" />
+                )}
+              </button>
 
               {/* Bulk Import Leads */}
               {canImport && (

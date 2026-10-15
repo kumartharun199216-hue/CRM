@@ -366,11 +366,23 @@ export const api = {
     }),
   getLeadFinancial: (leadId: number) =>
     request<{ financial: PreCloserFinancial; history: LeadFinancialHistoryEntry[] }>(`/leads/${leadId}/financial/`),
-  updateLeadFinancial: (leadId: number, data: { agreed_amount: string | number; amount_paid: string | number; note?: string }) =>
-    request<{ detail: string; financial: PreCloserFinancial; history_entry: LeadFinancialHistoryEntry }>(`/leads/${leadId}/financial/`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
+  updateLeadFinancial: (
+    leadId: number,
+    data: {
+      agreed_amount?: string | number;
+      amount_paid?: string | number;
+      payment_amount?: string | number;
+      mode?: 'record_payment' | 'set_totals';
+      note?: string;
+    }
+  ) =>
+    request<{ detail: string; financial: PreCloserFinancial; history_entry: LeadFinancialHistoryEntry }>(
+      `/leads/${leadId}/financial/`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    ),
   getLeadTimeline: (leadId: number) =>
 
     request<LeadTimelineResponse>(`/leads/${leadId}/timeline/`),
@@ -440,10 +452,42 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  getCommunicationLogs: (params?: { lead?: number; channel?: string }) => {
+  syncCallyzerCalls: (data?: { days?: number; start_date?: string; end_date?: string; call_from?: number | string; call_to?: number | string }) =>
+    request<{ status: string; result: { total_fetched: number; synced_count: number; unmatched_count: number } }>('/communications/callyzer/sync/', {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+  getCommunicationLogs: (params?: {
+    lead?: number;
+    channel?: string;
+    unmatched?: boolean;
+    employee?: number | string;
+    phone?: string;
+    search?: string;
+    status?: string;
+    call_type?: string;
+    start_date?: string;
+    end_date?: string;
+    min_duration?: number;
+    max_duration?: number;
+    has_recording?: string;
+    sort_by?: string;
+  }) => {
     const q = new URLSearchParams();
     if (params?.lead) q.append('lead', params.lead.toString());
     if (params?.channel) q.append('channel', params.channel);
+    if (params?.unmatched) q.append('unmatched', 'true');
+    if (params?.employee) q.append('employee', params.employee.toString());
+    if (params?.phone) q.append('phone', params.phone);
+    if (params?.search) q.append('search', params.search);
+    if (params?.status) q.append('status', params.status);
+    if (params?.call_type) q.append('call_type', params.call_type);
+    if (params?.start_date) q.append('start_date', params.start_date);
+    if (params?.end_date) q.append('end_date', params.end_date);
+    if (params?.min_duration !== undefined) q.append('min_duration', params.min_duration.toString());
+    if (params?.max_duration !== undefined) q.append('max_duration', params.max_duration.toString());
+    if (params?.has_recording) q.append('has_recording', params.has_recording);
+    if (params?.sort_by) q.append('sort_by', params.sort_by);
     return request<CommunicationLog[]>(`/communications/logs/?${q.toString()}`);
   },
 

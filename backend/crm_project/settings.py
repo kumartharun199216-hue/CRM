@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'apps.communications',
     'apps.reports',
     'apps.audit',
+    'apps.notifications',
 ]
 
 MIDDLEWARE = [
@@ -164,6 +165,17 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+CELERY_BEAT_SCHEDULE = {
+    'sync-callyzer-calls-every-5-minutes': {
+        'task': 'apps.communications.tasks.sync_callyzer_call_history_task',
+        'schedule': 300.0,  # Run every 5 minutes
+    },
+    'check-upcoming-followups-every-5-minutes': {
+        'task': 'apps.notifications.tasks.check_upcoming_followups_task',
+        'schedule': 300.0,  # Run every 5 minutes
+    },
+}
+
 # Google SMTP Email Configuration
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
@@ -182,4 +194,6 @@ WHATSAPP_BUSINESS_ACCOUNT_ID = os.environ.get('WHATSAPP_BUSINESS_ACCOUNT_ID', ''
 
 # Callyzer Calling Integration Configuration
 CALLYZER_API_KEY = os.environ.get('CALLYZER_API_KEY', '')
-CALLYZER_API_KEY = os.environ.get('CALLYZER_API_KEY', '')
+CALLYZER_BASE_URL = os.environ.get('CALLYZER_BASE_URL', 'https://sandbox.api.callyzer.co/api/v2.1').rstrip('/')
+CALLYZER_DEVICE_CONNECT_CODE = os.environ.get('CALLYZER_DEVICE_CONNECT_CODE', '')
+CALLYZER_WEBHOOK_SECRET = os.environ.get('CALLYZER_WEBHOOK_SECRET', '')

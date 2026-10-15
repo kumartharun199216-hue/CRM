@@ -11,6 +11,8 @@ from .views import (
     AdminTestEmailView,
     SendWhatsAppView,
     InitiateCallView,
+    CallyzerWebhookView,
+    CallyzerSyncView,
     CommunicationLogListView
 )
 
@@ -28,10 +30,12 @@ urlpatterns = [
     path('attachments/<int:pk>/', TemplateAttachmentDeleteView.as_view(), name='attachment-delete'),
     path('attachments/<int:pk>/download/', AttachmentDownloadView.as_view(), name='attachment-download'),
 
-    # Existing communication endpoints
+    # Communication & Telephony endpoints
     path('send-email/', SendEmailView.as_view(), name='send-email'),
     path('test-email/', AdminTestEmailView.as_view(), name='admin-test-email'),
     path('send-whatsapp/', SendWhatsAppView.as_view(), name='send-whatsapp'),
     path('initiate-call/', InitiateCallView.as_view(), name='initiate-call'),
+    path('callyzer/webhook/', CallyzerWebhookView.as_view(), name='callyzer-webhook'),
+    path('callyzer/sync/', CallyzerSyncView.as_view(), name='callyzer-sync'),
     path('logs/', CommunicationLogListView.as_view(), name='communication-logs'),
 ]

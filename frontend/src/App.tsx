@@ -20,6 +20,7 @@ import { BulkImportPage } from './components/BulkImportPage';
 import { UserManagementPage } from './components/UserManagementPage';
 import { TeamManagementPage } from './components/TeamManagementPage';
 import { EmailTemplatesPage } from './components/EmailTemplatesPage';
+import { CallHistoryPage } from './components/CallHistoryPage';
 import { MyProfilePage } from './components/MyProfilePage';
 import { LoginModal } from './components/LoginModal';
 import { ChangePasswordPage } from './components/ChangePasswordPage';
@@ -27,6 +28,9 @@ import { PasswordResetModal } from './components/PasswordResetModal';
 import { AlertCircle, RefreshCw, Table2, Kanban, PlusCircle, FileSpreadsheet, ShieldAlert, FileQuestion } from 'lucide-react';
 import { ThemeProvider } from './context/ThemeContext';
 import { TopNavigation } from './components/TopNavigation';
+import { NotificationProvider } from './context/NotificationContext';
+import { ToastContainer } from './components/ToastContainer';
+import { NotificationsPage } from './components/NotificationsPage';
 
 function parseUrlParams() {
   if (typeof window === 'undefined') {
@@ -65,6 +69,8 @@ function parseUrlParams() {
     'profile',
     'change-password',
     'lead360',
+    'calls',
+    'notifications',
   ];
   let view: ViewType = 'dashboard';
   const lead360 = pathnameLead360 || params.get('lead360') || null;
@@ -94,7 +100,11 @@ function parseUrlParams() {
   const isImport = params.get('import') === 'true' || params.get('import') === '1';
   const resetToken = params.get('token') || params.get('reset_token') || null;
 
-  return { view, stage, page, pageSize, search, lead360, isImport, resetToken };
+  const rawTab = params.get('tab');
+  const validTabs = ['overview', 'info', 'timeline', 'communications', 'followup', 'history', 'financial'];
+  const tab = rawTab && validTabs.includes(rawTab) ? rawTab : null;
+
+  return { view, stage, page, pageSize, search, lead360, isImport, resetToken, tab };
 }
 
 export function App() {
@@ -163,6 +173,7 @@ export function App() {
         search?: string;
         lead360?: number | string | null;
         isImport?: boolean;
+        tab?: string | null;
       },
       pushHistory: boolean = false
     ) => {
@@ -174,20 +185,26 @@ export function App() {
           url.pathname = `/leads/${updates.lead360}/360`;
           url.searchParams.set('view', 'lead360');
           url.searchParams.set('lead360', updates.lead360.toString());
+          if (updates.tab) {
+            url.searchParams.set('tab', updates.tab);
+          }
         } else if (updates.view !== 'dashboard' && updates.view !== 'not_found') {
           url.pathname = '/';
           url.searchParams.set('view', updates.view);
           url.searchParams.delete('lead360');
+          url.searchParams.delete('tab');
         } else if (updates.view === 'not_found') {
           url.pathname = '/';
           if (!url.searchParams.has('view')) {
             url.searchParams.set('view', 'unknown');
           }
           url.searchParams.delete('lead360');
+          url.searchParams.delete('tab');
         } else {
           url.pathname = '/';
           url.searchParams.delete('view');
           url.searchParams.delete('lead360');
+          url.searchParams.delete('tab');
         }
       }
 
@@ -236,6 +253,14 @@ export function App() {
           url.searchParams.set('import', 'true');
         } else {
           url.searchParams.delete('import');
+        }
+      }
+
+      if (updates.tab !== undefined) {
+        if (updates.tab && updates.tab !== 'overview') {
+          url.searchParams.set('tab', updates.tab);
+        } else {
+          url.searchParams.delete('tab');
         }
       }
 
@@ -409,11 +434,12 @@ export function App() {
     handleOpen360(lead);
   };
 
-  const handleOpen360 = useCallback((lead: Lead) => {
+  const handleOpen360 = useCallback((leadOrId: Lead | string | number) => {
     setPreviousView((prev) => (prev !== 'lead360' ? prev : 'spreadsheet'));
-    setActiveLead360Id(lead.id);
+    const id = typeof leadOrId === 'object' && leadOrId !== null ? leadOrId.id : leadOrId;
+    setActiveLead360Id(id);
     setActiveView('lead360');
-    updateUrl({ view: 'lead360', lead360: lead.id }, true);
+    updateUrl({ view: 'lead360', lead360: id }, true);
   }, [updateUrl]);
 
   const handleLeadUpdated = useCallback((updated: Lead) => {
@@ -424,7 +450,7 @@ export function App() {
     const returnView = previousView && previousView !== 'lead360' ? previousView : 'spreadsheet';
     setActiveView(returnView);
     setActiveLead360Id(null);
-    updateUrl({ view: returnView, lead360: null }, true);
+    updateUrl({ view: returnView, lead360: null, tab: null }, true);
   }, [previousView, updateUrl]);
 
   const handleAssignLead = async (leadId: number, employeeId: number) => {
@@ -537,9 +563,27 @@ export function App() {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-[#F5F7FB] dark:bg-[#0B1120] text-[#0F172A] dark:text-[#F8FAFC] flex font-sans transition-colors duration-200">
-        {/* Left-Side Navigation Menu */}
-        <Sidebar
+      <NotificationProvider isAuthenticated={Boolean(currentUser)}>
+        <ToastContainer
+          onNavigate={(url) => {
+            if (url.startsWith('/?view=')) {
+              const parsed = new URLSearchParams(url.replace('/?', ''));
+              const v = parsed.get('view') as ViewType;
+              const l360 = parsed.get('lead360');
+              if (l360) {
+                handleOpen360(l360);
+              } else if (v) {
+                setActiveView(v);
+                updateUrl({ view: v }, true);
+              }
+            } else {
+              window.location.href = url;
+            }
+          }}
+        />
+        <div className="min-h-screen bg-[#F5F7FB] dark:bg-[#0B1120] text-[#0F172A] dark:text-[#F8FAFC] flex font-sans transition-colors duration-200">
+          {/* Left-Side Navigation Menu */}
+          <Sidebar
           user={currentUser}
           activeView={activeView}
           onViewChange={(view) => {
@@ -612,7 +656,7 @@ export function App() {
             )}
 
             {/* Horizontal Top Menu / Header Bar */}
-            {activeView !== 'import' && activeView !== 'users' && activeView !== 'teams' && activeView !== 'templates' && activeView !== 'profile' && activeView !== 'not_found' && activeView !== 'lead360' && !(currentUser.role === 'SALES_EMPLOYEE' && activeView === 'unassigned') && (
+            {activeView !== 'import' && activeView !== 'users' && activeView !== 'teams' && activeView !== 'templates' && activeView !== 'profile' && activeView !== 'not_found' && activeView !== 'lead360' && activeView !== 'calls' && !(currentUser.role === 'SALES_EMPLOYEE' && activeView === 'unassigned') && (
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E2E8F0] dark:border-[#334155] pb-4">
                 {/* Left & Center: Title + Pipeline View Switcher (Spreadsheet vs Kanban) */}
                 <div className="flex flex-wrap items-center gap-4 min-w-0">
@@ -918,6 +962,38 @@ export function App() {
               <EmailTemplatesPage
                 currentUser={currentUser}
               />
+            ) : activeView === 'calls' ? (
+              <CallHistoryPage
+                currentUser={currentUser}
+                users={users}
+                onOpen360={handleOpen360}
+                onOpenCreateLeadWithNumber={(phoneNum) => {
+                  setSelectedLeadForEdit({ phone: phoneNum } as any);
+                  setIsLeadModalOpen(true);
+                }}
+              />
+            ) : activeView === 'notifications' ? (
+              <NotificationsPage
+                onNavigate={(url) => {
+                  if (url.startsWith('/?view=')) {
+                    const parsed = new URLSearchParams(url.replace('/?', ''));
+                    const v = parsed.get('view') as ViewType;
+                    const l360 = parsed.get('lead360');
+                    if (l360) {
+                      handleOpen360(l360);
+                    } else if (v) {
+                      setActiveView(v);
+                      updateUrl({ view: v }, true);
+                    }
+                  } else {
+                    window.location.href = url;
+                  }
+                }}
+                onViewChange={(v) => {
+                  setActiveView(v);
+                  updateUrl({ view: v }, true);
+                }}
+              />
             ) : activeView === 'profile' ? (
               <MyProfilePage
                 currentUser={currentUser}
@@ -954,6 +1030,7 @@ export function App() {
                 onBack={handleBackFrom360}
                 onCommunicate={handleCommunicate}
                 onLeadUpdated={handleLeadUpdated}
+                initialTab={(initialParams.tab as any) || undefined}
               />
             ) : activeView === 'spreadsheet' ? (
               <SpreadsheetView
@@ -1096,6 +1173,7 @@ export function App() {
           onSuccess={handleStageChangeSuccess}
         />
       </div>
+      </NotificationProvider>
     </ThemeProvider>
   );
 }

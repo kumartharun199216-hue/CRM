@@ -60,6 +60,8 @@ from apps.teams.models import Team
 from apps.audit.models import AuditEvent
 from apps.communications.models import CommunicationLog, CommunicationChannel, CommunicationStatus
 from apps.reports.models import ReportSchedule
+from apps.notifications.services import create_notification
+from apps.notifications.models import NotificationType, NotificationPriority
 from .import_service import (
     save_temp_import_file,
     get_temp_file_path,
@@ -294,6 +296,19 @@ class LeadChangeStageView(APIView):
                 note=note
             )
 
+            # In-app notification for stage movement
+            if locked_lead.assigned_employee and locked_lead.assigned_employee != user:
+                create_notification(
+                    recipient=locked_lead.assigned_employee,
+                    type=NotificationType.STAGE_CHANGED,
+                    title=f"Stage Updated: {locked_lead.name or locked_lead.lead_id}",
+                    message=f"{user.get_full_name() or user.username} moved lead {locked_lead.lead_id} to '{destination_stage.name}'.",
+                    entity_type='lead',
+                    entity_id=locked_lead.lead_id,
+                    action_url=f"/?view=lead360&lead360={locked_lead.lead_id}",
+                    priority=NotificationPriority.NORMAL,
+                )
+
             # Atomic Pending Closure financial record creation/update & audit history
             if is_pending_closure_stage(destination_stage):
                 agreed = serializer.validated_data['agreed_amount']
@@ -401,23 +416,53 @@ class LeadFinancialView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        agreed = serializer.validated_data['agreed_amount']
-        paid = serializer.validated_data['amount_paid']
+        from decimal import Decimal
+        mode = serializer.validated_data.get('mode', 'record_payment')
+        payment_amount = serializer.validated_data.get('payment_amount')
+        agreed = serializer.validated_data.get('agreed_amount')
+        paid = serializer.validated_data.get('amount_paid')
         note = serializer.validated_data.get('note', '')
 
         with transaction.atomic():
             locked_lead = Lead.objects.select_for_update().get(id=pk)
             fin = PreCloserFinancial.objects.select_for_update().filter(lead=locked_lead).first()
             if fin:
-                fin.agreed_amount = agreed
-                fin.amount_paid = paid
+                if agreed is not None:
+                    fin.agreed_amount = agreed
+
+                if payment_amount is not None:
+                    # Incremental payment installment
+                    new_paid = fin.amount_paid + payment_amount
+                    if new_paid > fin.agreed_amount:
+                        return Response(
+                            {"detail": f"Payment amount of ₹{payment_amount:,.2f} exceeds outstanding balance of ₹{fin.outstanding_balance:,.2f}."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    fin.amount_paid = new_paid
+                    if not note:
+                        note = f"Payment installment of ₹{payment_amount:,.2f} recorded (Total Paid: ₹{fin.amount_paid:,.2f}, Remaining: ₹{fin.outstanding_balance:,.2f})"
+                elif paid is not None:
+                    if paid > fin.agreed_amount:
+                        return Response(
+                            {"detail": f"Amount paid (₹{paid:,.2f}) cannot exceed total agreed amount (₹{fin.agreed_amount:,.2f})."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    fin.amount_paid = paid
+
                 fin.updated_by = request.user
                 fin.save()
             else:
+                initial_agreed = agreed if agreed is not None else (payment_amount or paid or Decimal('0.00'))
+                initial_paid = payment_amount if payment_amount is not None else (paid if paid is not None else Decimal('0.00'))
+                if initial_agreed > 0 and initial_paid > initial_agreed:
+                    return Response(
+                        {"detail": "Amount paid cannot exceed total agreed amount."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 fin = PreCloserFinancial.objects.create(
                     lead=locked_lead,
-                    agreed_amount=agreed,
-                    amount_paid=paid,
+                    agreed_amount=initial_agreed,
+                    amount_paid=initial_paid,
                     created_by=request.user,
                     updated_by=request.user
                 )
@@ -429,8 +474,29 @@ class LeadFinancialView(APIView):
                 amount_paid=fin.amount_paid,
                 outstanding_balance=fin.outstanding_balance,
                 changed_by=request.user,
-                note=note
+                note=note or 'Financial ledger updated'
             )
+
+            # In-app notification for payment recorded
+            if payment_amount is not None and payment_amount > 0:
+                recipients = []
+                if locked_lead.assigned_employee and locked_lead.assigned_employee != request.user:
+                    recipients.append(locked_lead.assigned_employee)
+                if locked_lead.team and getattr(locked_lead.team, 'manager', None) and locked_lead.team.manager != request.user:
+                    if locked_lead.team.manager not in recipients:
+                        recipients.append(locked_lead.team.manager)
+
+                for r in recipients:
+                    create_notification(
+                        recipient=r,
+                        type=NotificationType.PAYMENT_DUE,
+                        title=f"Payment Recorded: {locked_lead.name or locked_lead.lead_id}",
+                        message=f"Payment installment of ₹{payment_amount:,.2f} logged for {locked_lead.lead_id} ({locked_lead.name}). Remaining balance: ₹{fin.outstanding_balance:,.2f}.",
+                        entity_type='lead',
+                        entity_id=locked_lead.lead_id,
+                        action_url=f"/?view=lead360&lead360={locked_lead.lead_id}",
+                        priority=NotificationPriority.NORMAL,
+                    )
 
             AuditEvent.objects.create(
                 event_type='LEAD_FINANCIAL_RECORDED',
@@ -599,7 +665,11 @@ class LeadTimelineView(APIView):
                     'content': comm.content,
                     'status': comm.status,
                     'error_message': comm.error_message,
-                    'external_reference_id': comm.external_reference_id
+                    'external_reference_id': comm.external_reference_id,
+                    'call_duration': comm.call_duration,
+                    'call_recording_url': comm.call_recording_url,
+                    'call_type': comm.call_type,
+                    'synced_at': comm.synced_at.isoformat() if comm.synced_at else None,
                 }
             })
 
@@ -1484,6 +1554,19 @@ class LeadAssignView(APIView):
                 }
             )
 
+            # In-app notification for lead assignment
+            if target_user.id != user.id:
+                create_notification(
+                    recipient=target_user,
+                    type=NotificationType.LEAD_ASSIGNED,
+                    title=f"Lead Assigned: {lead.name or lead.lead_id}",
+                    message=f"Lead {lead.lead_id} ({lead.name}) has been assigned to you by {user.get_full_name() or user.username}.",
+                    entity_type='lead',
+                    entity_id=lead.lead_id,
+                    action_url=f"/?view=lead360&lead360={lead.lead_id}",
+                    priority=NotificationPriority.HIGH,
+                )
+
             return Response(LeadSerializer(lead, context={'request': request}).data, status=status.HTTP_200_OK)
 
 
@@ -2122,9 +2205,9 @@ class DashboardStatsView(APIView):
                     'note': 'Meta Cloud API configured' if wa_configured else 'Token / Phone ID missing in environment'
                 },
                 'callyzer': {
-                    'status': 'BLOCKED_PENDING_SPECS',
-                    'is_ready': False,
-                    'note': 'Outbound calling API specification pending verification'
+                    'status': 'CONFIGURED' if getattr(settings, 'CALLYZER_API_KEY', '') else 'UNCONFIGURED',
+                    'is_ready': bool(getattr(settings, 'CALLYZER_API_KEY', '')),
+                    'note': 'Callyzer Sandbox API & Device Connect active' if getattr(settings, 'CALLYZER_API_KEY', '') else 'Outbound calling API key missing'
                 },
                 'reports_scheduler': {
                     'active_schedules_count': active_schedules,

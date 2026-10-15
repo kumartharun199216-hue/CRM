@@ -4,6 +4,7 @@ import string
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.db import transaction
+from django.db.models import Q
 from .models import User, UserRole, PasswordResetToken
 
 def generate_cryptographic_temporary_password(length=12):
@@ -185,10 +186,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
             digits_only = re.sub(r'\D', '', mobile)
             if len(digits_only) < 7 or len(digits_only) > 15:
                 errors['mobile_number'] = "Enter a valid mobile phone number (7 to 15 digits)."
-            elif User.objects.filter(mobile_number=mobile).exists():
-                errors['mobile_number'] = "An employee with this mobile number already exists."
             else:
-                attrs['mobile_number'] = mobile
+                last10 = digits_only[-10:] if len(digits_only) >= 10 else digits_only
+                if User.objects.filter(Q(mobile_number=mobile) | Q(mobile_number__icontains=last10)).exists():
+                    errors['mobile_number'] = "An employee with this mobile number already exists."
+                else:
+                    attrs['mobile_number'] = mobile
 
         # 4. Username handling & uniqueness
         username = attrs.get('username', '').strip()
@@ -606,7 +609,10 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
             if not (7 <= len(digits) <= 15):
                 raise serializers.ValidationError({'mobile_number': "Enter a valid mobile phone number (7 to 15 digits)."})
             cleaned = re.sub(r'[\s\-\(\)]', '', raw_mobile)
-            existing = User.objects.exclude(pk=target_user.pk).filter(mobile_number=cleaned).exists()
+            last10 = digits[-10:] if len(digits) >= 10 else digits
+            existing = User.objects.exclude(pk=target_user.pk).filter(
+                Q(mobile_number=cleaned) | Q(mobile_number=raw_mobile) | Q(mobile_number__icontains=last10)
+            ).exists()
             if existing:
                 raise serializers.ValidationError({'mobile_number': "Another employee with this mobile number already exists."})
             attrs['mobile_number'] = cleaned

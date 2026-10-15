@@ -6,13 +6,16 @@ import {
   Mail,
   MessageSquare,
   Phone,
+  PhoneCall,
+  Volume2,
   Send,
   AlertTriangle,
   CheckCircle2,
   Clock,
   FileSpreadsheet,
   Paperclip,
-  FileText
+  FileText,
+  RefreshCw
 } from 'lucide-react';
 
 interface CommunicationModalProps {
@@ -42,6 +45,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
 
   // Submission state
   const [submitting, setSubmitting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [resultMsg, setResultMsg] = useState<{ type: 'success' | 'error' | 'blocker'; text: string } | null>(null);
 
   useEffect(() => {
@@ -155,8 +159,9 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     setResultMsg(null);
 
     try {
-      await api.initiateCall({ lead_id: lead.id });
-      setResultMsg({ type: 'success', text: `Call initiated via Callyzer for ${lead.phone}.` });
+      const res = await api.initiateCall({ lead_id: lead.id });
+      const telHint = res.tel_url ? ` Direct dial or dial from your paired phone.` : '';
+      setResultMsg({ type: 'success', text: `Call queued on Callyzer for ${lead.phone}.${telHint}` });
       api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Call initiation failed.';
@@ -167,6 +172,25 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
       api.getCommunicationLogs({ lead: lead.id }).then(setLogs);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSyncCalls = async () => {
+    if (!lead) return;
+    setSyncing(true);
+    try {
+      const res = await api.syncCallyzerCalls();
+      setResultMsg({
+        type: 'success',
+        text: `Call history synchronized from Callyzer (${res.result?.synced_count || 0} calls processed).`
+      });
+      const updatedLogs = await api.getCommunicationLogs({ lead: lead.id });
+      setLogs(updatedLogs);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to sync call history';
+      setResultMsg({ type: 'error', text: msg });
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -427,31 +451,54 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
                 <Phone className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Callyzer Outbound Calling</h4>
+                <h4 className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Callyzer Outbound Calling & Telephony</h4>
                 <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1 max-w-md mx-auto">
-                  Initiate a verified call session to <span className="font-mono text-[#0F172A] dark:text-[#F8FAFC] font-semibold">{lead.phone || 'N/A'}</span>.
-                  Per project rules, unverified calls are never simulated.
+                  Queue call session to <span className="font-mono text-[#0F172A] dark:text-[#F8FAFC] font-semibold">{lead.phone || 'N/A'}</span> on your connected Callyzer Biz mobile device, or dial directly.
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleInitiateCall}
-                disabled={submitting || !lead.phone}
-                className="crm-btn-primary inline-flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
-              >
-                <Phone className="w-3.5 h-3.5" />
-                {submitting ? 'Connecting with Callyzer...' : 'Initiate Call'}
-              </button>
+              <div className="flex items-center justify-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleInitiateCall}
+                  disabled={submitting || !lead.phone}
+                  className="crm-btn-primary inline-flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  {submitting ? 'Connecting with Callyzer...' : 'Queue Call (Callyzer)'}
+                </button>
+                {lead.phone && (
+                  <a
+                    href={`tel:${lead.phone.replace(/[^0-9+]/g, '')}`}
+                    className="crm-btn-secondary inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer"
+                    title="Direct Dial via Device / Phone Link"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5 text-[#16A34A] dark:text-emerald-400" />
+                    Direct Dial
+                  </a>
+                )}
+              </div>
             </div>
           )}
 
           {/* Lead Communication Logs */}
           <div className="pt-3 border-t border-[#E2E8F0] dark:border-[#334155] space-y-2">
-            <h4 className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
-              Communication Activity Log ({logs.length})
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#64748B] dark:text-[#94A3B8]" />
+                Communication Activity Log ({logs.length})
+              </h4>
+              <button
+                type="button"
+                onClick={handleSyncCalls}
+                disabled={syncing}
+                className="text-[11px] text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                title="Synchronize real call logs from Callyzer"
+              >
+                <RefreshCw className={`w-3 h-3 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing...' : 'Sync Call History'}
+              </button>
+            </div>
 
             {logs.length === 0 ? (
               <p className="text-xs text-[#64748B] dark:text-[#94A3B8] italic">No communication logged for this lead yet.</p>
@@ -460,7 +507,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
                 {logs.map((log) => (
                   <div
                     key={log.id}
-                    className="p-3 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl text-xs space-y-1"
+                    className="p-3 bg-[#F8FAFC] dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#334155] rounded-xl text-xs space-y-1.5"
                   >
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
@@ -470,14 +517,41 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
                         className={`crm-pill text-[10px] font-mono ${
                           log.status === 'SUCCESS'
                             ? 'crm-pill-success'
+                            : log.status === 'QUEUED'
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-300'
+                            : log.status === 'MISSED'
+                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300 border-orange-300'
+                            : log.status === 'REJECTED'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300 border-purple-300'
                             : log.status === 'BLOCKED'
                             ? 'crm-pill-warning'
                             : 'crm-pill-error'
                         }`}
                       >
-                        {log.status}
+                        {log.status === 'QUEUED' ? 'QUEUED ON DEVICE' : log.status}
                       </span>
                     </div>
+
+                    {log.channel === 'CALL' && (log.call_type || (log.call_duration !== undefined && log.call_duration !== null)) && (
+                      <div className="flex items-center gap-2 text-[11px] text-[#2563EB] dark:text-blue-400 font-medium">
+                        <span>{log.call_type || 'Call'}</span>
+                        {log.call_duration !== null && log.call_duration !== undefined && (
+                          <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">({log.call_duration}s duration)</span>
+                        )}
+                      </div>
+                    )}
+
+                    {log.content && (
+                      <p className="text-[11px] text-[#334155] dark:text-slate-300 m-0">{log.content}</p>
+                    )}
+
+                    {log.call_recording_url && (
+                      <div className="pt-1 flex items-center gap-2">
+                        <Volume2 className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400 shrink-0" />
+                        <audio controls src={log.call_recording_url} className="h-6 w-full max-w-xs" />
+                      </div>
+                    )}
+
                     {log.error_message && (
                       <p className="text-[11px] text-[#DC2626] dark:text-rose-400 m-0">{log.error_message}</p>
                     )}

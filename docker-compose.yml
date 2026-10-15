@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
@@ -55,6 +53,9 @@ services:
       - WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN:-}
       - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
       - CALLYZER_API_KEY=${CALLYZER_API_KEY:-}
+      - CALLYZER_BASE_URL=${CALLYZER_BASE_URL:-https://sandbox.api.callyzer.co/api/v2.1}
+      - CALLYZER_DEVICE_CONNECT_CODE=${CALLYZER_DEVICE_CONNECT_CODE:-}
+      - CALLYZER_WEBHOOK_SECRET=${CALLYZER_WEBHOOK_SECRET:-}
     depends_on:
       - db
       - redis
@@ -88,6 +89,10 @@ services:
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Skill Move CRM <lasyalasya153@gmail.com>}
       - EMAIL_TIMEOUT=${EMAIL_TIMEOUT:-30}
+      - CALLYZER_API_KEY=${CALLYZER_API_KEY:-}
+      - CALLYZER_BASE_URL=${CALLYZER_BASE_URL:-https://sandbox.api.callyzer.co/api/v2.1}
+      - CALLYZER_DEVICE_CONNECT_CODE=${CALLYZER_DEVICE_CONNECT_CODE:-}
+      - CALLYZER_WEBHOOK_SECRET=${CALLYZER_WEBHOOK_SECRET:-}
     depends_on:
       - backend
       - redis

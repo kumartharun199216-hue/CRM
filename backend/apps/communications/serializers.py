@@ -116,17 +116,41 @@ class AttachmentUploadSerializer(serializers.Serializer):
         return value
 
 class CommunicationLogSerializer(serializers.ModelSerializer):
-    initiated_by_name = serializers.CharField(source='initiated_by.username', read_only=True)
+    initiated_by_name = serializers.SerializerMethodField()
+    initiated_by_mobile = serializers.CharField(source='initiated_by.mobile_number', read_only=True)
     lead_title = serializers.CharField(source='lead.title', read_only=True)
+    lead_contact_name = serializers.CharField(source='lead.contact_name', read_only=True)
+    lead_phone = serializers.CharField(source='lead.phone', read_only=True)
+    tel_url = serializers.SerializerMethodField()
 
     class Meta:
         model = CommunicationLog
         fields = [
-            'id', 'lead', 'lead_title', 'channel', 'recipient', 'subject',
+            'id', 'lead', 'lead_title', 'lead_contact_name', 'lead_phone',
+            'channel', 'recipient', 'subject',
             'content', 'status', 'error_message', 'external_reference_id',
-            'initiated_by', 'initiated_by_name', 'created_at'
+            'call_duration', 'call_recording_url', 'call_type', 'tel_url',
+            'synced_at', 'call_datetime', 'provider_source',
+            'initiated_by', 'initiated_by_name', 'initiated_by_mobile', 'created_at'
         ]
-        read_only_fields = ['id', 'status', 'error_message', 'external_reference_id', 'initiated_by', 'created_at']
+        read_only_fields = [
+            'id', 'status', 'error_message', 'external_reference_id',
+            'call_duration', 'call_recording_url', 'call_type', 'tel_url',
+            'synced_at', 'call_datetime', 'provider_source',
+            'initiated_by', 'created_at'
+        ]
+
+    def get_initiated_by_name(self, obj):
+        if not obj.initiated_by:
+            return None
+        full = f"{obj.initiated_by.first_name} {obj.initiated_by.last_name}".strip()
+        return full if full else obj.initiated_by.username
+
+    def get_tel_url(self, obj):
+        if obj.recipient:
+            clean = ''.join(c for c in obj.recipient if c.isdigit() or c == '+')
+            return f"tel:{clean}"
+        return None
 
 class SendEmailSerializer(serializers.Serializer):
     lead_id = serializers.IntegerField(required=True)

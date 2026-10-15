@@ -1,6 +1,6 @@
 export type UserRole = 'ADMIN' | 'MANAGER' | 'SALES_EMPLOYEE';
 
-export type ViewType = 'dashboard' | 'spreadsheet' | 'kanban' | 'unassigned' | 'import' | 'users' | 'teams' | 'templates' | 'profile' | 'change-password' | 'lead360' | 'notifications' | 'not_found';
+export type ViewType = 'dashboard' | 'spreadsheet' | 'kanban' | 'unassigned' | 'import' | 'users' | 'teams' | 'templates' | 'profile' | 'change-password' | 'lead360' | 'notifications' | 'calls' | 'not_found';
 
 export interface UserUpdatePayload {
   full_name?: string;
@@ -394,16 +394,27 @@ export interface CommunicationTemplate {
 
 export interface CommunicationLog {
   id: number;
-  lead: number;
-  lead_title: string;
+  lead?: number | null;
+  lead_title?: string;
+  lead_contact_name?: string;
+  lead_phone?: string;
   channel: 'EMAIL' | 'WHATSAPP' | 'CALL';
   recipient: string;
   subject?: string;
   content: string;
-  status: 'SUCCESS' | 'FAILED' | 'BLOCKED';
+  status: 'SUCCESS' | 'FAILED' | 'BLOCKED' | 'QUEUED' | 'MISSED' | 'REJECTED';
   error_message?: string;
   external_reference_id?: string;
+  call_duration?: number;
+  call_recording_url?: string;
+  call_type?: string;
+  tel_url?: string;
+  synced_at?: string;
+  call_datetime?: string;
+  provider_source?: string;
+  initiated_by?: number | null;
   initiated_by_name: string;
+  initiated_by_mobile?: string;
   created_at: string;
 }
 
@@ -826,6 +837,8 @@ export type NotificationType =
   | 'PAYMENT_DUE'
   | 'LEAD_ASSIGNED'
   | 'MEETING_SCHEDULED'
+  | 'MISSED_CALL'
+  | 'STAGE_CHANGED'
   | 'SYSTEM_ALERT'
   | 'GENERAL';
 
@@ -871,6 +884,7 @@ export type NotificationFilterCategory =
   | 'unread'
   | 'leads'
   | 'tasks'
+  | 'calls'
   | 'meetings'
   | 'payments'
   | 'system'

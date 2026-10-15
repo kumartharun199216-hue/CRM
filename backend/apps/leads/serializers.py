@@ -58,18 +58,27 @@ class PreCloserFinancialSerializer(serializers.ModelSerializer):
 
 
 class PreCloserFinancialUpdateSerializer(serializers.Serializer):
-    agreed_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=True)
-    amount_paid = serializers.DecimalField(max_digits=12, decimal_places=2, required=True)
+    agreed_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    amount_paid = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    payment_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    mode = serializers.ChoiceField(choices=['record_payment', 'set_totals'], default='record_payment', required=False)
     note = serializers.CharField(required=False, allow_blank=True, default='')
 
     def validate(self, attrs):
+        from decimal import Decimal
         agreed = attrs.get('agreed_amount')
         paid = attrs.get('amount_paid')
-        from decimal import Decimal
+        payment = attrs.get('payment_amount')
+
+        if agreed is None and paid is None and payment is None:
+            raise serializers.ValidationError({"non_field_errors": ["Either payment_amount or agreed_amount/amount_paid must be provided."]})
+
         if agreed is not None and agreed < Decimal('0.00'):
             raise serializers.ValidationError({"agreed_amount": "Total agreed amount cannot be negative."})
         if paid is not None and paid < Decimal('0.00'):
             raise serializers.ValidationError({"amount_paid": "Amount paid cannot be negative."})
+        if payment is not None and payment <= Decimal('0.00'):
+            raise serializers.ValidationError({"payment_amount": "Payment amount received must be greater than zero."})
         if agreed is not None and paid is not None and paid > agreed:
             raise serializers.ValidationError({"amount_paid": "Amount paid cannot exceed the total agreed amount."})
         return attrs

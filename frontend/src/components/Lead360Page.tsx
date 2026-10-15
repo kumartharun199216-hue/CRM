@@ -45,8 +45,76 @@ import {
   Info,
   ExternalLink,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  PlusCircle
 } from 'lucide-react';
+
+export type Lead360Tab =
+  | 'overview'
+  | 'info'
+  | 'timeline'
+  | 'communications'
+  | 'followup'
+  | 'history'
+  | 'financial';
+
+export const VALID_LEAD360_TABS: readonly Lead360Tab[] = [
+  'overview',
+  'info',
+  'timeline',
+  'communications',
+  'followup',
+  'history',
+  'financial',
+];
+
+export const resolveInitialLead360Tab = (
+  leadId: number | string,
+  explicitTab?: Lead360Tab
+): Lead360Tab => {
+  if (explicitTab && VALID_LEAD360_TABS.includes(explicitTab)) {
+    return explicitTab;
+  }
+  if (typeof window !== 'undefined') {
+    // 1. Check URL query parameter `tab` (e.g. ?tab=financial or ?tab=timeline)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlTab = params.get('tab') as Lead360Tab | null;
+      if (urlTab && VALID_LEAD360_TABS.includes(urlTab)) {
+        return urlTab;
+      }
+    } catch {
+      // ignore
+    }
+
+    // 2. Check URL hash (e.g. #financial)
+    try {
+      const hash = window.location.hash.replace(/^#/, '') as Lead360Tab;
+      if (hash && VALID_LEAD360_TABS.includes(hash)) {
+        return hash;
+      }
+    } catch {
+      // ignore
+    }
+
+    // 3. Check sessionStorage per-lead and global fallback
+    try {
+      if (leadId) {
+        const stored = sessionStorage.getItem(`lead_360_tab_${leadId}`) as Lead360Tab | null;
+        if (stored && VALID_LEAD360_TABS.includes(stored)) {
+          return stored;
+        }
+      }
+      const lastTab = sessionStorage.getItem('lead_360_last_tab') as Lead360Tab | null;
+      if (lastTab && VALID_LEAD360_TABS.includes(lastTab)) {
+        return lastTab;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return 'overview';
+};
 
 interface Lead360PageProps {
   leadId: number | string;
@@ -57,6 +125,7 @@ interface Lead360PageProps {
   onBack: () => void;
   onCommunicate?: (lead: Lead, channel: 'EMAIL' | 'WHATSAPP' | 'CALL') => void;
   onLeadUpdated?: (lead: Lead) => void;
+  initialTab?: Lead360Tab;
 }
 
 const formatINR = (val: number | string | null | undefined): string => {
@@ -94,11 +163,73 @@ export const Lead360Page: React.FC<Lead360PageProps> = ({
   onBack,
   onCommunicate,
   onLeadUpdated,
+  initialTab,
 }) => {
-  // Navigation & Tabs
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'info' | 'timeline' | 'communications' | 'followup' | 'history' | 'financial'
-  >('overview');
+  // Navigation & Tabs with URL Query & Session Storage Persistence
+  const [activeTab, setActiveTabState] = useState<Lead360Tab>(() =>
+    resolveInitialLead360Tab(leadId, initialTab)
+  );
+
+  const setActiveTab = useCallback(
+    (newTab: Lead360Tab) => {
+      setActiveTabState(newTab);
+      if (typeof window !== 'undefined') {
+        try {
+          const url = new URL(window.location.href);
+          if (newTab !== 'overview') {
+            url.searchParams.set('tab', newTab);
+          } else {
+            url.searchParams.delete('tab');
+          }
+          window.history.replaceState({}, '', url.toString());
+        } catch {
+          // ignore
+        }
+        try {
+          if (leadId) {
+            sessionStorage.setItem(`lead_360_tab_${leadId}`, newTab);
+          }
+          sessionStorage.setItem('lead_360_last_tab', newTab);
+        } catch {
+          // ignore
+        }
+      }
+    },
+    [leadId]
+  );
+
+  // Sync state if initialTab prop changes
+  useEffect(() => {
+    if (initialTab && VALID_LEAD360_TABS.includes(initialTab)) {
+      setActiveTabState(initialTab);
+    }
+  }, [initialTab]);
+
+  // Synchronize on browser Back/Forward (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      const resolved = resolveInitialLead360Tab(leadId);
+      setActiveTabState(resolved);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [leadId]);
+
+  // Keep URL search param in sync on initial mount if not already present
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        const currentParam = url.searchParams.get('tab');
+        if (activeTab !== 'overview' && currentParam !== activeTab) {
+          url.searchParams.set('tab', activeTab);
+          window.history.replaceState({}, '', url.toString());
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [activeTab]);
 
   // Lead State
   const [lead, setLead] = useState<Lead | null>(null);
@@ -132,6 +263,54 @@ export const Lead360Page: React.FC<Lead360PageProps> = ({
   const [savingFinancial, setSavingFinancial] = useState(false);
   const [financialError, setFinancialError] = useState<string | null>(null);
   const [financialSuccess, setFinancialSuccess] = useState<string | null>(null);
+
+  // Financial Mode Tab with persistence
+  const [financialActionTab, setFinancialActionTabState] = useState<'record_payment' | 'override'>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const p = new URLSearchParams(window.location.search);
+        const m = p.get('fin_mode');
+        if (m === 'record_payment' || m === 'override') return m;
+        if (leadId) {
+          const s = sessionStorage.getItem(`lead_360_fin_tab_${leadId}`);
+          if (s === 'record_payment' || s === 'override') return s;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return 'record_payment';
+  });
+
+  const setFinancialActionTab = useCallback(
+    (mode: 'record_payment' | 'override') => {
+      setFinancialActionTabState(mode);
+      if (typeof window !== 'undefined') {
+        try {
+          const url = new URL(window.location.href);
+          if (mode === 'override') {
+            url.searchParams.set('fin_mode', 'override');
+          } else {
+            url.searchParams.delete('fin_mode');
+          }
+          window.history.replaceState({}, '', url.toString());
+        } catch {
+          // ignore
+        }
+        try {
+          if (leadId) {
+            sessionStorage.setItem(`lead_360_fin_tab_${leadId}`, mode);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    },
+    [leadId]
+  );
+
+  const [paymentAmountInput, setPaymentAmountInput] = useState<string>('');
+  const [paymentNoteInput, setPaymentNoteInput] = useState<string>('');
 
   // Edit Lead Information State
   const [isEditingInfo, setIsEditingInfo] = useState<boolean>(false);
@@ -510,7 +689,61 @@ export const Lead360Page: React.FC<Lead360PageProps> = ({
     }
   };
 
-  // Handle Save Financials
+  // Handle Record New Installment Payment
+  const handleRecordPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lead) return;
+
+    const paymentNum = Number(paymentAmountInput);
+    if (isNaN(paymentNum) || paymentNum <= 0) {
+      setFinancialError('Please enter a valid payment installment amount greater than ₹0.');
+      return;
+    }
+
+    const currentOutstanding = Number(financialData?.outstanding_balance ?? 0);
+    if (currentOutstanding > 0 && paymentNum > currentOutstanding) {
+      setFinancialError(
+        `Payment amount (${formatINR(paymentNum)}) cannot exceed the current outstanding balance of ${formatINR(currentOutstanding)}.`
+      );
+      return;
+    }
+
+    setSavingFinancial(true);
+    setFinancialError(null);
+    setFinancialSuccess(null);
+
+    try {
+      const res = await api.updateLeadFinancial(lead.id, {
+        payment_amount: paymentNum,
+        mode: 'record_payment',
+        note: paymentNoteInput.trim() || undefined,
+      });
+      setFinancialData(res.financial);
+      setFinancialHistory((prev) => [res.history_entry, ...prev]);
+      setFinancialForm({
+        agreed_amount: String(res.financial.agreed_amount || ''),
+        amount_paid: String(res.financial.amount_paid || ''),
+        note: '',
+      });
+      setPaymentAmountInput('');
+      setPaymentNoteInput('');
+      setFinancialSuccess(
+        `Payment installment of ${formatINR(paymentNum)} successfully logged! Remaining outstanding balance is now ${formatINR(res.financial.outstanding_balance)}.`
+      );
+      setTimeout(() => setFinancialSuccess(null), 6000);
+      fetchTimeline(lead.id);
+      setLead((prevLead) => (prevLead ? { ...prevLead, pre_closer_financial: res.financial } : null));
+      if (lead) {
+        onLeadUpdatedRef.current?.({ ...lead, pre_closer_financial: res.financial });
+      }
+    } catch (err: any) {
+      setFinancialError(err instanceof Error ? err.message : 'Failed to record payment installment.');
+    } finally {
+      setSavingFinancial(false);
+    }
+  };
+
+  // Handle Save Financials (Deal Figures Override / Adjustment)
   const handleSaveFinancials = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lead) return;
@@ -539,13 +772,18 @@ export const Lead360Page: React.FC<Lead360PageProps> = ({
       const res = await api.updateLeadFinancial(lead.id, {
         agreed_amount: agreed,
         amount_paid: paid,
-        note: financialForm.note || 'Financial details updated from Lead 360 Workspace',
+        mode: 'set_totals',
+        note: financialForm.note.trim() || 'Financial figures adjusted manually',
       });
       setFinancialData(res.financial);
       setFinancialHistory((prev) => [res.history_entry, ...prev]);
-      setFinancialSuccess('Financial record successfully updated.');
-      setTimeout(() => setFinancialSuccess(null), 4000);
+      setFinancialSuccess('Financial ledger successfully updated.');
+      setTimeout(() => setFinancialSuccess(null), 5000);
       fetchTimeline(lead.id);
+      setLead((prevLead) => (prevLead ? { ...prevLead, pre_closer_financial: res.financial } : null));
+      if (lead) {
+        onLeadUpdatedRef.current?.({ ...lead, pre_closer_financial: res.financial });
+      }
     } catch (err: any) {
       setFinancialError(err instanceof Error ? err.message : 'Failed to update financial details.');
     } finally {
@@ -2058,129 +2296,392 @@ export const Lead360Page: React.FC<Lead360PageProps> = ({
             ===================================================================== */}
             {activeTab === 'financial' && (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
-                    <IndianRupee className="w-4 h-4 text-[#7C3AED] dark:text-[#A78BFA]" /> Pending Closure Financial Workspace
-                  </h3>
-                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
-                    Authoritative financial oversight connected directly to `PreCloserFinancial` in INR (₹).
-                  </p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                      <IndianRupee className="w-4 h-4 text-[#7C3AED] dark:text-[#A78BFA]" /> Pending Closure Financial Workspace
+                    </h3>
+                    <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                      Authoritative fee agreement and incremental installment tracking in INR (₹).
+                    </p>
+                  </div>
+                  {financialData && (
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                          Number(financialData.outstanding_balance) === 0
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                            : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                        }`}
+                      >
+                        {Number(financialData.outstanding_balance) === 0
+                          ? '✓ Fully Cleared'
+                          : `₹${Number(financialData.outstanding_balance).toLocaleString('en-IN')} Balance Pending`}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* KPI Metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-[#EFF6FF] dark:bg-[#1E293B] border border-[#BFDBFE] dark:border-[#3B82F6]/50 p-4 rounded-xl">
-                    <span className="text-[11px] font-bold text-[#1E40AF] dark:text-[#93C5FD] uppercase tracking-wider block">
-                      Total Agreed Value
-                    </span>
-                    <div className="text-xl font-black text-[#1E40AF] dark:text-[#93C5FD] mt-1">
-                      {formatINR(financialData?.agreed_amount || 0)}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-[#EFF6FF] dark:bg-[#1E293B] border border-[#BFDBFE] dark:border-[#3B82F6]/50 p-4 rounded-xl shadow-2xs">
+                      <span className="text-[11px] font-bold text-[#1E40AF] dark:text-[#93C5FD] uppercase tracking-wider block">
+                        Total Agreed Value
+                      </span>
+                      <div className="text-xl font-black text-[#1E40AF] dark:text-[#93C5FD] mt-1">
+                        {formatINR(financialData?.agreed_amount || 0)}
+                      </div>
+                      <span className="text-[10px] text-[#2563EB] dark:text-[#60A5FA]">Contracted tuition / fee</span>
                     </div>
-                    <span className="text-[10px] text-[#2563EB] dark:text-[#60A5FA]">Total course/program tuition</span>
+
+                    <div className="bg-[#F0FDF4] dark:bg-[#052E16]/40 border border-[#BBF7D0] dark:border-[#166534] p-4 rounded-xl shadow-2xs">
+                      <span className="text-[11px] font-bold text-[#15803D] dark:text-[#86EFAC] uppercase tracking-wider block">
+                        Total Amount Paid
+                      </span>
+                      <div className="text-xl font-black text-[#15803D] dark:text-[#86EFAC] mt-1">
+                        {formatINR(financialData?.amount_paid || 0)}
+                      </div>
+                      <span className="text-[10px] text-[#16A34A] dark:text-[#4ADE80]">Confirmed collections to date</span>
+                    </div>
+
+                    <div className="bg-[#FEF2F2] dark:bg-[#450A0A]/40 border border-[#FECACA] dark:border-[#7F1D1D] p-4 rounded-xl shadow-2xs">
+                      <span className="text-[11px] font-bold text-[#B91C1C] dark:text-[#FCA5A5] uppercase tracking-wider block">
+                        Outstanding Balance
+                      </span>
+                      <div className="text-xl font-black text-[#DC2626] dark:text-[#F87171] mt-1">
+                        {formatINR(financialData?.outstanding_balance || 0)}
+                      </div>
+                      <span className="text-[10px] text-[#DC2626] dark:text-[#F87171]">Remaining to be collected</span>
+                    </div>
                   </div>
 
-                  <div className="bg-[#F0FDF4] dark:bg-[#052E16]/40 border border-[#BBF7D0] dark:border-[#166534] p-4 rounded-xl">
-                    <span className="text-[11px] font-bold text-[#15803D] dark:text-[#86EFAC] uppercase tracking-wider block">
-                      Amount Paid Recorded
-                    </span>
-                    <div className="text-xl font-black text-[#15803D] dark:text-[#86EFAC] mt-1">
-                      {formatINR(financialData?.amount_paid || 0)}
+                  {/* Visual Collection Progress Bar */}
+                  {financialData && Number(financialData.agreed_amount) > 0 && (
+                    <div className="bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] rounded-xl p-3 shadow-2xs">
+                      <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
+                        <span className="text-[#64748B] dark:text-[#94A3B8]">Collection Progress</span>
+                        <span className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                          {Math.min(100, Math.round((Number(financialData.amount_paid) / Number(financialData.agreed_amount)) * 100))}% Collected
+                        </span>
+                      </div>
+                      <div className="w-full bg-[#E2E8F0] dark:bg-[#334155] h-2.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-[#2563EB] via-[#7C3AED] to-[#16A34A] h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min(100, (Number(financialData.amount_paid) / Number(financialData.agreed_amount)) * 100)}%`,
+                          }}
+                        />
+                      </div>
                     </div>
-                    <span className="text-[10px] text-[#16A34A] dark:text-[#4ADE80]">Confirmed collections</span>
-                  </div>
-
-                  <div className="bg-[#FEF2F2] dark:bg-[#450A0A]/40 border border-[#FECACA] dark:border-[#7F1D1D] p-4 rounded-xl">
-                    <span className="text-[11px] font-bold text-[#B91C1C] dark:text-[#FCA5A5] uppercase tracking-wider block">
-                      Outstanding Balance
-                    </span>
-                    <div className="text-xl font-black text-[#DC2626] dark:text-[#F87171] mt-1">
-                      {formatINR(financialData?.outstanding_balance || 0)}
-                    </div>
-                    <span className="text-[10px] text-[#DC2626] dark:text-[#F87171]">Agreed Amount − Amount Paid</span>
-                  </div>
+                  )}
                 </div>
 
-                {/* Financial Update Form (Authorized) */}
+                {/* Notifications / Alerts */}
+                {financialSuccess && (
+                  <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs rounded-xl font-semibold flex items-center gap-2.5 animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span>{financialSuccess}</span>
+                  </div>
+                )}
+
+                {financialError && (
+                  <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs rounded-xl font-semibold flex items-center gap-2.5 animate-in fade-in">
+                    <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                    <span>{financialError}</span>
+                  </div>
+                )}
+
+                {/* Financial Actions (Authorized) */}
                 {canEditLead && (
-                  <div className="bg-white dark:bg-[#172033] border border-[#DDD6FE] dark:border-[#6D28D9]/40 rounded-xl p-5 space-y-4">
-                    <h4 className="text-xs font-bold text-[#7C3AED] dark:text-[#A78BFA] uppercase tracking-wider">
-                      Update Financial Figures
-                    </h4>
+                  <div className="bg-white dark:bg-[#172033] border border-[#DDD6FE] dark:border-[#6D28D9]/40 rounded-xl overflow-hidden shadow-xs">
+                    {/* Mode Navigation Tabs */}
+                    <div className="flex border-b border-[#E2E8F0] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#111827]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFinancialActionTab('record_payment');
+                          setFinancialError(null);
+                        }}
+                        className={`flex-1 py-3 px-4 text-xs font-bold flex items-center justify-center gap-2 border-b-2 transition cursor-pointer ${
+                          financialActionTab === 'record_payment'
+                            ? 'border-[#7C3AED] text-[#7C3AED] dark:text-[#A78BFA] bg-white dark:bg-[#172033]'
+                            : 'border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+                        }`}
+                      >
+                        <PlusCircle className="w-4 h-4 text-[#7C3AED] dark:text-[#A78BFA]" />
+                        Record New Payment (Installment)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFinancialActionTab('override');
+                          setFinancialError(null);
+                        }}
+                        className={`flex-1 py-3 px-4 text-xs font-bold flex items-center justify-center gap-2 border-b-2 transition cursor-pointer ${
+                          financialActionTab === 'override'
+                            ? 'border-[#7C3AED] text-[#7C3AED] dark:text-[#A78BFA] bg-white dark:bg-[#172033]'
+                            : 'border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+                        }`}
+                      >
+                        <Edit3 className="w-4 h-4 text-[#64748B] dark:text-[#94A3B8]" />
+                        Adjust Deal Figures (Override)
+                      </button>
+                    </div>
 
-                    {financialError && (
-                      <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs rounded-xl font-semibold flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-                        <span>{financialError}</span>
-                      </div>
-                    )}
+                    <div className="p-5">
+                      {financialActionTab === 'record_payment' ? (
+                        /* TAB 1: RECORD NEW INSTALLMENT PAYMENT */
+                        <form onSubmit={handleRecordPayment} className="space-y-4">
+                          <div>
+                            <span className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] block mb-0.5">
+                              Record Received Payment
+                            </span>
+                            <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                              Logs a student installment. Automatically adds to confirmed payments and deducts from outstanding balance.
+                            </p>
+                          </div>
 
-                    <form onSubmit={handleSaveFinancials} className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 dark:text-[#CBD5E1] mb-1">
-                            Total Agreed Amount (₹) *
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={financialForm.agreed_amount}
-                            onChange={(e) => setFinancialForm({ ...financialForm, agreed_amount: e.target.value })}
-                            placeholder="e.g. 75000"
-                            required
-                            className="w-full bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]"
-                          />
-                        </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 dark:text-[#CBD5E1] mb-1">
+                                Payment Amount Received (₹) *
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-xs font-bold text-[#64748B] dark:text-[#94A3B8]">₹</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="1"
+                                  max={financialData?.outstanding_balance ? Number(financialData.outstanding_balance) : undefined}
+                                  value={paymentAmountInput}
+                                  onChange={(e) => {
+                                    setPaymentAmountInput(e.target.value);
+                                    if (financialError) setFinancialError(null);
+                                  }}
+                                  placeholder="e.g. 1000"
+                                  required
+                                  disabled={savingFinancial}
+                                  className="w-full bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg pl-7 pr-3 py-2 text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
+                                />
+                              </div>
 
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 dark:text-[#CBD5E1] mb-1">
-                            Amount Paid (₹) *
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={financialForm.amount_paid}
-                            onChange={(e) => setFinancialForm({ ...financialForm, amount_paid: e.target.value })}
-                            placeholder="e.g. 25000"
-                            required
-                            className="w-full bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]"
-                          />
-                        </div>
+                              {/* Quick selection chips for quick logging */}
+                              {financialData && Number(financialData.outstanding_balance) > 0 && (
+                                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                  <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-medium mr-1">Quick Add:</span>
+                                  {[500, 1000, 2000]
+                                    .filter((amt) => amt < Number(financialData.outstanding_balance))
+                                    .map((amt) => (
+                                      <button
+                                        key={amt}
+                                        type="button"
+                                        onClick={() => setPaymentAmountInput(String(amt))}
+                                        className="text-[10px] font-semibold bg-[#EDE9FE] hover:bg-[#DDD6FE] dark:bg-purple-950/60 dark:hover:bg-purple-900/60 text-[#7C3AED] dark:text-purple-300 px-2 py-0.5 rounded-md transition cursor-pointer"
+                                      >
+                                        +₹{amt.toLocaleString('en-IN')}
+                                      </button>
+                                    ))}
+                                  <button
+                                    type="button"
+                                    onClick={() => setPaymentAmountInput(String(financialData.outstanding_balance))}
+                                    className="text-[10px] font-semibold bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md transition cursor-pointer"
+                                  >
+                                    Full Balance (₹{Number(financialData.outstanding_balance).toLocaleString('en-IN')})
+                                  </button>
+                                </div>
+                              )}
+                            </div>
 
-                        <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-bold text-slate-700 dark:text-[#CBD5E1] mb-1">
-                            Audit Note / Reason for Change
-                          </label>
-                          <input
-                            type="text"
-                            value={financialForm.note}
-                            onChange={(e) => setFinancialForm({ ...financialForm, note: e.target.value })}
-                            placeholder="e.g. Received 2nd installment of ₹25,000 via NEFT"
-                            className="w-full bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-xs text-[#0F172A] dark:text-[#F8FAFC]"
-                          />
-                        </div>
-                      </div>
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 dark:text-[#CBD5E1] mb-1">
+                                Payment Note / Transaction Reference
+                              </label>
+                              <input
+                                type="text"
+                                value={paymentNoteInput}
+                                onChange={(e) => setPaymentNoteInput(e.target.value)}
+                                placeholder="e.g. Paid via UPI / Google Pay (Ref: 4321)"
+                                disabled={savingFinancial}
+                                className="w-full bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
+                              />
+                              <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] mt-1">
+                                Optional note or payment reference for audit tracking.
+                              </p>
+                            </div>
+                          </div>
 
-                      <div className="flex items-center justify-end">
-                        <button
-                          type="submit"
-                          disabled={savingFinancial}
-                          className="px-5 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs"
-                        >
-                          {savingFinancial ? 'Saving...' : 'Save Financial Ledger Update'}
-                        </button>
-                      </div>
-                    </form>
+                          {/* Live Dynamic Calculation Preview Card */}
+                          {(() => {
+                            const curAgreed = Number(financialData?.agreed_amount || 0);
+                            const curPaid = Number(financialData?.amount_paid || 0);
+                            const curOut = Number(financialData?.outstanding_balance || 0);
+                            const pmt = parseFloat(paymentAmountInput) || 0;
+                            const newPaid = curPaid + pmt;
+                            const newOut = Math.max(0, curAgreed - newPaid);
+                            const isExceeding = pmt > curOut && curOut > 0;
+
+                            return (
+                              <div
+                                className={`p-3.5 rounded-xl border text-xs transition ${
+                                  isExceeding
+                                    ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300'
+                                    : 'bg-gradient-to-r from-[#F8FAFC] to-[#EFF6FF] dark:from-[#111827] dark:to-[#172554]/30 border-[#CBD5E1] dark:border-[#334155]'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="font-bold text-[11px] uppercase tracking-wider text-[#475569] dark:text-[#94A3B8]">
+                                    Live Calculation Preview
+                                  </span>
+                                  {isExceeding ? (
+                                    <span className="font-bold text-[11px] text-rose-600 dark:text-rose-400">
+                                      ⚠ Exceeds Outstanding Balance
+                                    </span>
+                                  ) : pmt > 0 ? (
+                                    <span className="font-bold text-[11px] text-[#16A34A] dark:text-[#4ADE80]">
+                                      Outstanding reduced by {formatINR(pmt)}
+                                    </span>
+                                  ) : null}
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                  <div className="p-2 bg-white dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#334155]">
+                                    <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] block">Previously Paid</span>
+                                    <span className="font-bold text-slate-800 dark:text-slate-100">{formatINR(curPaid)}</span>
+                                  </div>
+                                  <div className="p-2 bg-white dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#334155]">
+                                    <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] block">+ New Payment</span>
+                                    <span className="font-bold text-[#7C3AED] dark:text-[#A78BFA]">+{formatINR(pmt)}</span>
+                                  </div>
+                                  <div className="p-2 bg-white dark:bg-[#1E293B] rounded-lg border border-[#BBF7D0] dark:border-[#166534]">
+                                    <span className="text-[10px] text-[#15803D] dark:text-[#86EFAC] block">= New Total Paid</span>
+                                    <span className="font-bold text-[#15803D] dark:text-[#86EFAC]">{formatINR(newPaid)}</span>
+                                  </div>
+                                  <div className="p-2 bg-white dark:bg-[#1E293B] rounded-lg border border-[#FECACA] dark:border-[#7F1D1D]">
+                                    <span className="text-[10px] text-[#B91C1C] dark:text-[#FCA5A5] block">Remaining Balance</span>
+                                    <span
+                                      className={`font-bold ${
+                                        newOut === 0 ? 'text-[#16A34A] dark:text-[#4ADE80]' : 'text-[#DC2626] dark:text-[#F87171]'
+                                      }`}
+                                    >
+                                      {formatINR(newOut)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          <div className="flex items-center justify-end pt-1">
+                            <button
+                              type="submit"
+                              disabled={
+                                savingFinancial ||
+                                !paymentAmountInput ||
+                                Number(paymentAmountInput) <= 0 ||
+                                (Number(paymentAmountInput) > Number(financialData?.outstanding_balance || 0) &&
+                                  Number(financialData?.outstanding_balance || 0) > 0)
+                              }
+                              className="px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs flex items-center gap-2"
+                            >
+                              <PlusCircle className="w-4 h-4" />
+                              {savingFinancial
+                                ? 'Recording Payment...'
+                                : paymentAmountInput && Number(paymentAmountInput) > 0
+                                ? `Record Payment of ${formatINR(paymentAmountInput)}`
+                                : 'Record Payment'}
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        /* TAB 2: OVERRIDE / ADJUST CONTRACT FIGURES */
+                        <form onSubmit={handleSaveFinancials} className="space-y-4">
+                          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                            <div>
+                              <strong className="block font-semibold">Deal Figures Override Mode</strong>
+                              Use this form only if you need to revise the total agreed fee (e.g. course discount or add-on) or manually correct cumulative totals.
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 dark:text-[#CBD5E1] mb-1">
+                                Total Agreed Amount (₹) *
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={financialForm.agreed_amount}
+                                onChange={(e) => setFinancialForm({ ...financialForm, agreed_amount: e.target.value })}
+                                placeholder="e.g. 5000"
+                                required
+                                disabled={savingFinancial}
+                                className="w-full bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 dark:text-[#CBD5E1] mb-1">
+                                Cumulative Amount Paid (₹) *
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={financialForm.amount_paid}
+                                onChange={(e) => setFinancialForm({ ...financialForm, amount_paid: e.target.value })}
+                                placeholder="e.g. 3000"
+                                required
+                                disabled={savingFinancial}
+                                className="w-full bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-2">
+                              <label className="block text-[11px] font-bold text-slate-700 dark:text-[#CBD5E1] mb-1">
+                                Audit Note / Reason for Figures Adjustment *
+                              </label>
+                              <input
+                                type="text"
+                                value={financialForm.note}
+                                onChange={(e) => setFinancialForm({ ...financialForm, note: e.target.value })}
+                                placeholder="e.g. Applied scholarship discount / Corrected ledger totals"
+                                required
+                                disabled={savingFinancial}
+                                className="w-full bg-[#F8FAFC] dark:bg-[#111827] border border-[#CBD5E1] dark:border-[#334155] rounded-lg px-3 py-2 text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-end pt-1">
+                            <button
+                              type="submit"
+                              disabled={savingFinancial}
+                              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs"
+                            >
+                              {savingFinancial ? 'Saving Figures...' : 'Save Figures Adjustment'}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {/* Financial History Table */}
                 <div className="space-y-3 pt-2">
-                  <h4 className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] uppercase tracking-wide">
-                    Financial Audit History ({financialHistory.length})
-                  </h4>
-                  <div className="border border-[#E2E8F0] dark:border-[#334155] rounded-xl overflow-hidden bg-white dark:bg-[#172033]">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] uppercase tracking-wide flex items-center gap-2">
+                      <History className="w-4 h-4 text-[#7C3AED] dark:text-[#A78BFA]" />
+                      Financial Audit History ({financialHistory.length})
+                    </h4>
+                    <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                      Immutable audit ledger
+                    </span>
+                  </div>
+                  <div className="border border-[#E2E8F0] dark:border-[#334155] rounded-xl overflow-hidden bg-white dark:bg-[#172033] shadow-2xs">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-[#F8FAFC] dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#334155] text-[#475569] dark:text-[#94A3B8] font-bold">
                         <tr>
@@ -2195,7 +2696,7 @@ export const Lead360Page: React.FC<Lead360PageProps> = ({
                       <tbody className="divide-y divide-[#F1F5F9] dark:divide-[#334155] text-[#334155] dark:text-[#CBD5E1]">
                         {financialHistory.map((fh) => (
                           <tr key={fh.id} className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/70 transition">
-                            <td className="py-2.5 px-3 whitespace-nowrap">{formatIST(fh.timestamp)}</td>
+                            <td className="py-2.5 px-3 whitespace-nowrap font-medium">{formatIST(fh.timestamp)}</td>
                             <td className="py-2.5 px-3 text-right font-medium">{formatINR(fh.agreed_amount)}</td>
                             <td className="py-2.5 px-3 text-right font-semibold text-[#16A34A] dark:text-[#4ADE80]">
                               {formatINR(fh.amount_paid)}

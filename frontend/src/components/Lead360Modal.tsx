@@ -29,7 +29,8 @@ import {
   FileText,
   User as UserIcon,
   Tag,
-  AlertCircle
+  AlertCircle,
+  Volume2
 } from 'lucide-react';
 
 interface Lead360ModalProps {
@@ -965,17 +966,40 @@ export const Lead360Modal: React.FC<Lead360ModalProps> = ({
                           {log.channel === 'EMAIL' && <Mail className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-[#0F172A] dark:text-slate-200 uppercase text-[11px]">{log.channel}</span>
-                            <span className="crm-pill font-mono text-[10px]">
-                              {log.status}
+                            <span className={`crm-pill font-mono text-[10px] ${
+                              log.status === 'SUCCESS'
+                                ? 'crm-pill-success'
+                                : log.status === 'QUEUED'
+                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-300'
+                                : log.status === 'MISSED'
+                                ? 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300 border-orange-300'
+                                : log.status === 'REJECTED'
+                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300 border-purple-300'
+                                : log.status === 'BLOCKED'
+                                ? 'crm-pill-warning'
+                                : 'crm-pill-error'
+                            }`}>
+                              {log.status === 'QUEUED' ? 'QUEUED ON DEVICE' : log.status}
                             </span>
+                            {log.channel === 'CALL' && log.call_type && (
+                              <span className="text-[11px] text-[#2563EB] dark:text-blue-400 font-medium">
+                                {log.call_type} {log.call_duration !== undefined && log.call_duration !== null ? `(${log.call_duration}s)` : ''}
+                              </span>
+                            )}
                             <span className="text-[#64748B] dark:text-slate-400 text-[10px]">
                               To: {log.recipient}
                             </span>
                           </div>
                           {log.subject && <div className="text-[#0F172A] dark:text-slate-100 font-medium text-xs mt-1">{log.subject}</div>}
                           {log.content && <p className="text-[#64748B] dark:text-slate-300 text-xs mt-0.5">{log.content}</p>}
+                          {log.call_recording_url && (
+                            <div className="pt-1.5 flex items-center gap-2">
+                              <Volume2 className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400 shrink-0" />
+                              <audio controls src={log.call_recording_url} className="h-6 w-full max-w-xs" />
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="text-right shrink-0">

@@ -5,10 +5,10 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.core.mail import send_mail
-from django.http import FileResponse, Http404
+from django.utils import timezone
 from django.db.models import Q
 
-from .models import CommunicationTemplate, TemplateAttachment, CommunicationLog, CommunicationChannel
+from .models import CommunicationTemplate, TemplateAttachment, CommunicationLog, CommunicationChannel, CommunicationStatus
 from .serializers import (
     CommunicationTemplateSerializer,
     TemplateAttachmentSerializer,
@@ -603,7 +603,15 @@ class InitiateCallView(views.APIView):
 
         try:
             log = CommunicationService.initiate_call(lead, request.user)
-            return Response(CommunicationLogSerializer(log).data, status=status.HTTP_200_OK)
+            log_data = CommunicationLogSerializer(log).data
+            clean_digits = ''.join(c for c in (lead.phone or '') if c.isdigit() or c == '+')
+            log_data['tel_url'] = f"tel:{clean_digits}" if clean_digits else None
+            AuditEvent.objects.create(
+                event_type='COMMUNICATION_ATTEMPT',
+                user=request.user,
+                details={'lead_id': lead.id, 'channel': 'CALL', 'status': 'SUCCESS', 'recipient': lead.phone}
+            )
+            return Response(log_data, status=status.HTTP_200_OK)
         except IntegrationBlockerException as e:
             AuditEvent.objects.create(
                 event_type='COMMUNICATION_ATTEMPT',
@@ -611,6 +619,211 @@ class InitiateCallView(views.APIView):
                 details={'lead_id': lead.id, 'channel': 'CALL', 'status': 'BLOCKED', 'reason': str(e)}
             )
             return Response({'error': str(e), 'blocker': True}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as e:
+            AuditEvent.objects.create(
+                event_type='COMMUNICATION_ATTEMPT',
+                user=request.user,
+                details={'lead_id': lead.id, 'channel': 'CALL', 'status': 'FAILED', 'reason': str(e)}
+            )
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CallyzerWebhookView(views.APIView):
+    """
+    Receives incoming call event webhooks from Callyzer.
+    Matches phone numbers to CRM leads, records call duration,
+    call recordings, and creates audit records.
+    """
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        secret = getattr(settings, 'CALLYZER_WEBHOOK_SECRET', '')
+        if secret:
+            from django.utils.crypto import constant_time_compare
+            header_secret = request.headers.get('X-Callyzer-Secret') or request.query_params.get('secret') or ''
+            if not constant_time_compare(header_secret, secret):
+                return Response({'error': 'Invalid webhook secret'}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        if not data:
+            return Response({'status': 'ignored', 'message': 'Empty payload'}, status=status.HTTP_200_OK)
+
+        records = data if isinstance(data, list) else [data]
+        processed_count = 0
+
+        for employee_record in records:
+            if not isinstance(employee_record, dict):
+                continue
+
+            emp_number = str(employee_record.get('emp_number') or '').strip()
+            call_logs = employee_record.get('call_logs', [])
+            if not isinstance(call_logs, list):
+                continue
+
+            matching_user = None
+            if emp_number:
+                from apps.authentication.models import User
+                clean_emp = ''.join(c for c in emp_number if c.isdigit())
+                if clean_emp:
+                    search_emp = clean_emp[-10:] if len(clean_emp) >= 10 else clean_emp
+                    matching_user = User.objects.filter(mobile_number__icontains=search_emp).first()
+
+            for call_item in call_logs:
+                if not isinstance(call_item, dict):
+                    continue
+
+                client_number = str(call_item.get('client_number') or '').strip()
+                call_id = str(call_item.get('id') or '').strip()
+                try:
+                    duration = int(float(call_item.get('duration') or 0))
+                except (ValueError, TypeError):
+                    duration = 0
+                call_type = str(call_item.get('call_type') or 'Outgoing').strip()
+                recording_url = str(call_item.get('call_recording_url') or '').strip()
+                note = str(call_item.get('note') or '').strip()
+                call_date = str(call_item.get('call_date') or '')
+                call_time = str(call_item.get('call_time') or '')
+
+                clean_client = ''.join(c for c in client_number if c.isdigit())
+                lead = None
+                if clean_client:
+                    search_digits = clean_client[-10:] if len(clean_client) >= 10 else clean_client
+                    lead = Lead.objects.filter(phone__icontains=search_digits).first()
+
+                call_type_lower = call_type.lower()
+                if duration > 0:
+                    call_status = CommunicationStatus.SUCCESS
+                elif 'missed' in call_type_lower:
+                    call_status = CommunicationStatus.MISSED
+                elif 'rejected' in call_type_lower:
+                    call_status = CommunicationStatus.REJECTED
+                else:
+                    call_status = CommunicationStatus.FAILED
+
+                acting_user = matching_user
+                if not acting_user and lead:
+                    acting_user = getattr(lead, 'assigned_employee', None) or getattr(lead, 'created_by', None)
+
+                existing_log = CommunicationLog.objects.filter(
+                    external_reference_id=call_id
+                ).first() if call_id else None
+
+                callyzer_lead_ref = str(call_item.get('lead_id') or '').strip()
+                if not existing_log and callyzer_lead_ref and lead:
+                    existing_log = CommunicationLog.objects.filter(
+                        lead=lead,
+                        external_reference_id=callyzer_lead_ref,
+                        status=CommunicationStatus.QUEUED
+                    ).first()
+
+                content_text = f"{call_type} call ({duration}s)"
+                if note:
+                    content_text += f": {note}"
+                if call_date and call_time:
+                    content_text += f" at {call_date} {call_time}"
+
+                sync_dt = timezone.now()
+
+                actual_call_dt = None
+                if call_date:
+                    try:
+                        combined = f"{call_date} {call_time}".strip() if call_time else call_date
+                        for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M', '%Y-%m-%d', '%d-%m-%Y'):
+                            try:
+                                parsed = datetime.datetime.strptime(combined, fmt)
+                                actual_call_dt = timezone.make_aware(parsed, timezone.get_current_timezone()) if timezone.is_naive(parsed) else parsed
+                                break
+                            except ValueError:
+                                continue
+                    except Exception:
+                        pass
+                if not actual_call_dt:
+                    actual_call_dt = sync_dt
+
+                if existing_log:
+                    existing_log.external_reference_id = call_id
+                    existing_log.call_duration = duration
+                    existing_log.call_recording_url = recording_url
+                    existing_log.call_type = call_type
+                    existing_log.content = content_text
+                    existing_log.status = call_status
+                    existing_log.synced_at = sync_dt
+                    existing_log.call_datetime = actual_call_dt
+                    existing_log.provider_source = 'CALLYZER'
+                    if lead and not existing_log.lead:
+                        existing_log.lead = lead
+                    if acting_user and not existing_log.initiated_by:
+                        existing_log.initiated_by = acting_user
+                    existing_log.save()
+                else:
+                    CommunicationLog.objects.create(
+                        lead=lead,
+                        channel=CommunicationChannel.CALL,
+                        recipient=client_number or (lead.phone if lead else 'Unknown'),
+                        status=call_status,
+                        content=content_text,
+                        external_reference_id=call_id,
+                        call_duration=duration,
+                        call_recording_url=recording_url,
+                        call_type=call_type,
+                        initiated_by=acting_user,
+                        synced_at=sync_dt,
+                        call_datetime=actual_call_dt,
+                        provider_source='CALLYZER'
+                    )
+
+                if acting_user:
+                    AuditEvent.objects.create(
+                        event_type='COMMUNICATION_ATTEMPT',
+                        user=acting_user,
+                        details={
+                            'lead_id': lead.id if lead else None,
+                            'channel': 'CALL',
+                            'call_type': call_type,
+                            'duration': duration,
+                            'recording_url': recording_url,
+                            'callyzer_id': call_id,
+                            'source': 'CALLYZER_WEBHOOK'
+                        }
+                    )
+                processed_count += 1
+
+        return Response({'status': 'success', 'processed_logs': processed_count}, status=status.HTTP_200_OK)
+
+
+class CallyzerSyncView(views.APIView):
+    """
+    POST /api/communications/callyzer/sync/
+    Triggers incremental or historical synchronization of call history from Callyzer Sandbox/Production API.
+    Available to authenticated agents and administrators.
+    Supports parameters:
+    - days: number of days back (e.g. 7, 30, 60, 90, 180)
+    - start_date, end_date: custom date strings ('YYYY-MM-DD')
+    - call_from, call_to: Unix timestamps
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            days = request.data.get('days') if isinstance(request.data, dict) else None
+            start_date = request.data.get('start_date') if isinstance(request.data, dict) else None
+            end_date = request.data.get('end_date') if isinstance(request.data, dict) else None
+            call_from = request.data.get('call_from') if isinstance(request.data, dict) else None
+            call_to = request.data.get('call_to') if isinstance(request.data, dict) else None
+
+            res = CommunicationService.sync_callyzer_call_history(
+                call_from=call_from,
+                call_to=call_to,
+                days=days,
+                start_date=start_date,
+                end_date=end_date
+            )
+            return Response({'status': 'success', 'result': res}, status=status.HTTP_200_OK)
+        except IntegrationBlockerException as e:
+            return Response({'error': str(e), 'blocker': True}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommunicationLogListView(generics.ListAPIView):
@@ -621,23 +834,106 @@ class CommunicationLogListView(generics.ListAPIView):
         user = self.request.user
         queryset = CommunicationLog.objects.all()
 
+        from apps.authentication.models import UserRole
         if user.is_superuser or user.role == UserRole.ADMIN:
             pass
         elif user.role == UserRole.MANAGER:
             managed_team = getattr(user, 'managed_team', None)
             team_id = managed_team.id if managed_team else user.team_id
-            queryset = queryset.filter(lead__team_id=team_id)
+            queryset = queryset.filter(Q(lead__team_id=team_id) | Q(initiated_by__team_id=team_id))
         elif user.role == UserRole.SALES_EMPLOYEE:
-            queryset = queryset.filter(lead__assigned_employee_id=user.id)
+            queryset = queryset.filter(Q(lead__assigned_employee_id=user.id) | Q(initiated_by=user))
         else:
             return CommunicationLog.objects.none()
 
-        lead_id = self.request.query_params.get('lead')
-        if lead_id:
-            queryset = queryset.filter(lead_id=lead_id)
+        unmatched = self.request.query_params.get('unmatched')
+        if unmatched and unmatched.lower() in ('true', '1'):
+            queryset = queryset.filter(lead__isnull=True)
+        else:
+            lead_id = self.request.query_params.get('lead')
+            if lead_id:
+                queryset = queryset.filter(lead_id=lead_id)
 
         channel = self.request.query_params.get('channel')
         if channel:
             queryset = queryset.filter(channel=channel)
 
-        return queryset.select_related('lead', 'initiated_by').order_by('-created_at')
+        employee = self.request.query_params.get('employee')
+        if employee and employee != 'ALL':
+            if str(employee).isdigit():
+                queryset = queryset.filter(initiated_by_id=int(employee))
+            else:
+                queryset = queryset.filter(initiated_by__username__icontains=str(employee))
+
+        phone = self.request.query_params.get('phone')
+        if phone:
+            clean_phone = ''.join(c for c in phone if c.isdigit())
+            if clean_phone:
+                search_digits = clean_phone[-10:] if len(clean_phone) >= 10 else clean_phone
+                queryset = queryset.filter(recipient__icontains=search_digits)
+            else:
+                queryset = queryset.filter(recipient__icontains=phone)
+
+        call_type = self.request.query_params.get('call_type')
+        if call_type and call_type != 'ALL':
+            queryset = queryset.filter(call_type__iexact=call_type)
+
+        call_status = self.request.query_params.get('status')
+        if call_status and call_status != 'ALL':
+            queryset = queryset.filter(status__iexact=call_status)
+
+        # Advanced Date Filtering (start_date / end_date against call_datetime or created_at)
+        start_date = self.request.query_params.get('start_date')
+        if start_date:
+            queryset = queryset.filter(
+                Q(call_datetime__date__gte=start_date) |
+                Q(call_datetime__isnull=True, created_at__date__gte=start_date)
+            )
+
+        end_date = self.request.query_params.get('end_date')
+        if end_date:
+            queryset = queryset.filter(
+                Q(call_datetime__date__lte=end_date) |
+                Q(call_datetime__isnull=True, created_at__date__lte=end_date)
+            )
+
+        # Duration range filtering
+        min_duration = self.request.query_params.get('min_duration')
+        if min_duration is not None and str(min_duration).isdigit():
+            queryset = queryset.filter(call_duration__gte=int(min_duration))
+
+        max_duration = self.request.query_params.get('max_duration')
+        if max_duration is not None and str(max_duration).isdigit():
+            queryset = queryset.filter(call_duration__lte=int(max_duration))
+
+        # Audio recording filter
+        has_recording = self.request.query_params.get('has_recording')
+        if has_recording is not None and has_recording != 'ALL':
+            if has_recording.lower() in ('true', '1', 'yes'):
+                queryset = queryset.exclude(call_recording_url='').exclude(call_recording_url__isnull=True)
+            elif has_recording.lower() in ('false', '0', 'no'):
+                queryset = queryset.filter(Q(call_recording_url='') | Q(call_recording_url__isnull=True))
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(recipient__icontains=search) |
+                Q(lead__contact_name__icontains=search) |
+                Q(lead__title__icontains=search) |
+                Q(content__icontains=search) |
+                Q(external_reference_id__icontains=search) |
+                Q(initiated_by__username__icontains=search)
+            )
+
+        # Ordering / Sorting
+        sort_by = self.request.query_params.get('sort_by') or self.request.query_params.get('ordering')
+        if sort_by == 'oldest':
+            order_cols = ['call_datetime', 'created_at']
+        elif sort_by == 'duration_desc':
+            order_cols = ['-call_duration', '-call_datetime', '-created_at']
+        elif sort_by == 'duration_asc':
+            order_cols = ['call_duration', '-call_datetime', '-created_at']
+        else:
+            order_cols = ['-call_datetime', '-created_at']
+
+        return queryset.select_related('lead', 'initiated_by').order_by(*order_cols)

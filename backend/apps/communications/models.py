@@ -7,9 +7,12 @@ class CommunicationChannel(models.TextChoices):
     CALL = 'CALL', 'Callyzer Call'
 
 class CommunicationStatus(models.TextChoices):
+    QUEUED = 'QUEUED', 'Queued / Initiated'
     SUCCESS = 'SUCCESS', 'Success'
     FAILED = 'FAILED', 'Failed'
     BLOCKED = 'BLOCKED', 'Blocked (Unconfigured or Unverified)'
+    MISSED = 'MISSED', 'Missed Call'
+    REJECTED = 'REJECTED', 'Rejected Call'
 
 class CommunicationTemplate(models.Model):
     name = models.CharField(max_length=150)
@@ -111,6 +114,8 @@ class CommunicationLog(models.Model):
     lead = models.ForeignKey(
         'leads.Lead',
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='communication_logs'
     )
     channel = models.CharField(max_length=20, choices=CommunicationChannel.choices)
@@ -120,15 +125,23 @@ class CommunicationLog(models.Model):
     status = models.CharField(max_length=20, choices=CommunicationStatus.choices)
     error_message = models.TextField(blank=True)
     external_reference_id = models.CharField(max_length=255, blank=True)
+    call_duration = models.PositiveIntegerField(null=True, blank=True, help_text="Call duration in seconds")
+    call_recording_url = models.URLField(max_length=500, blank=True, default='', help_text="Callyzer audio recording URL")
+    call_type = models.CharField(max_length=50, blank=True, default='', help_text="Incoming, Outgoing, Missed, Rejected")
     initiated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='initiated_communications'
     )
+    synced_at = models.DateTimeField(null=True, blank=True, help_text="Timestamp of provider sync")
+    call_datetime = models.DateTimeField(null=True, blank=True, db_index=True, help_text="Timestamp when the actual phone call occurred")
+    provider_source = models.CharField(max_length=50, blank=True, default='CALLYZER', help_text="Telephony provider source")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-call_datetime', '-created_at']
 
     def __str__(self):
         return f"{self.channel} to {self.recipient} [{self.status}]"

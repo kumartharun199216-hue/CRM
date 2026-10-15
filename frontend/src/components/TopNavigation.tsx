@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, ViewType } from '../types';
 import { ThemeToggle } from './ThemeToggle';
+import { useNotifications } from '../context/NotificationContext';
 import {
   Search,
   Bell,
@@ -115,31 +116,48 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
     return target.slice(0, 2).toUpperCase();
   };
 
-  const notifications = [
-    {
-      id: 1,
-      title: 'Active Follow-ups Pending',
-      time: '15m ago',
-      desc: 'Scheduled consultations awaiting status update today.',
-      read: false,
-    },
-    {
-      id: 2,
-      title: 'Pipeline Progression',
-      time: '1h ago',
-      desc: 'Student moved to Pending Closure stage.',
-      read: false,
-    },
-    {
-      id: 3,
-      title: 'Daily Admissions Summary',
-      time: '4h ago',
-      desc: 'New lead inquiries updated across admissions queues.',
-      read: true,
-    },
-  ];
+  const {
+    unreadCount,
+    recentNotifications,
+    loading: notifLoading,
+    markAsRead,
+    markAllAsRead,
+    refreshNotifications,
+  } = useNotifications();
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const formatNotifTime = (isoString: string) => {
+    try {
+      const date = new Date(isoString);
+      const diffSecs = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (diffSecs < 60) return 'Just now';
+      const diffMins = Math.floor(diffSecs / 60);
+      if (diffMins < 60) return `${diffMins}m ago`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      const diffDays = Math.floor(diffHours / 24);
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return date.toLocaleDateString();
+    } catch {
+      return '';
+    }
+  };
+
+  const getNotifIcon = (type: string) => {
+    switch (type) {
+      case 'LEAD_ASSIGNED':
+        return <UserCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />;
+      case 'TASK_DUE':
+        return <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />;
+      case 'MISSED_CALL':
+        return <Bell className="w-4 h-4 text-rose-600 dark:text-rose-400" />;
+      case 'PAYMENT_DUE':
+        return <KeyRound className="w-4 h-4 text-purple-600 dark:text-purple-400" />;
+      case 'STAGE_CHANGED':
+        return <Briefcase className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
+      default:
+        return <Bell className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
+    }
+  };
 
   return (
     <header className="h-16 bg-white dark:bg-[#111827] border-b border-[#E2E8F0] dark:border-[#334155] px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-30 transition-colors duration-200">
@@ -234,7 +252,12 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
           <button
             type="button"
             id="top-nav-notifications-btn"
-            onClick={() => setIsNotificationsOpen((prev) => !prev)}
+            onClick={() => {
+              setIsNotificationsOpen((prev) => !prev);
+              if (!isNotificationsOpen) {
+                refreshNotifications();
+              }
+            }}
             aria-label={`Notifications, ${unreadCount} unread`}
             title="Notifications"
             className="w-10 h-10 rounded-lg flex items-center justify-center text-[#64748B] hover:text-[#0F172A] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors relative cursor-pointer"
@@ -243,33 +266,94 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
             {unreadCount > 0 && (
               <span
                 id="top-nav-notif-count-badge"
-                className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#DC2626] ring-2 ring-white dark:ring-[#111827]"
-              />
+                className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#DC2626] text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-[#111827] shadow-xs"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
             )}
           </button>
 
           {isNotificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] shadow-xl py-2 z-50">
-              <div className="px-4 py-2 border-b border-[#F1F5F9] dark:border-[#273449] flex items-center justify-between">
-                <span className="font-bold text-xs text-[#0F172A] dark:text-[#F8FAFC]">Notifications</span>
-                <span className="text-[10px] font-semibold text-[#2563EB] dark:text-[#60A5FA] bg-[#EFF6FF] dark:bg-[#172554] px-2 py-0.5 rounded-full">
-                  {unreadCount} new
-                </span>
-              </div>
-              <div className="divide-y divide-[#F1F5F9] dark:divide-[#273449] max-h-80 overflow-y-auto">
-                {notifications.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`p-3 text-xs hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition cursor-pointer ${!item.read ? 'bg-[#EFF6FF]/40 dark:bg-[#172554]/30' : ''
-                      }`}
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] shadow-2xl overflow-hidden z-50">
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-[#F1F5F9] dark:border-[#273449] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-xs text-[#0F172A] dark:text-[#F8FAFC]">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="text-[10px] font-semibold text-[#2563EB] dark:text-[#60A5FA] bg-[#EFF6FF] dark:bg-[#172554] px-2 py-0.5 rounded-full">
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => markAllAsRead()}
+                    className="text-[11px] font-semibold text-[#2563EB] dark:text-[#60A5FA] hover:underline cursor-pointer"
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{item.title}</span>
-                      <span className="text-[10px] text-[#94A3B8] dark:text-[#64748B]">{item.time}</span>
-                    </div>
-                    <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] m-0">{item.desc}</p>
+                    Mark all read
+                  </button>
+                )}
+              </div>
+
+              {/* Items List */}
+              <div className="divide-y divide-[#F1F5F9] dark:divide-[#273449] max-h-80 overflow-y-auto">
+                {recentNotifications.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-[#64748B] dark:text-[#94A3B8]">
+                    <Bell className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                    <span>No notifications right now</span>
                   </div>
-                ))}
+                ) : (
+                  recentNotifications.map((item) => {
+                    const isUnread = !item.read_at;
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => {
+                          if (isUnread) markAsRead(item.id);
+                          if (item.action_url) {
+                            setIsNotificationsOpen(false);
+                            window.location.href = item.action_url;
+                          }
+                        }}
+                        className={`p-3 text-xs hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition cursor-pointer flex items-start gap-3 ${
+                          isUnread ? 'bg-[#EFF6FF]/50 dark:bg-[#172554]/30' : ''
+                        }`}
+                      >
+                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 shrink-0 mt-0.5">
+                          {getNotifIcon(item.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1 mb-0.5">
+                            <span className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                              {item.title}
+                            </span>
+                            <span className="text-[10px] text-[#94A3B8] dark:text-[#64748B] shrink-0">
+                              {formatNotifTime(item.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] line-clamp-2 m-0">
+                            {item.message}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-2 border-t border-[#F1F5F9] dark:border-[#273449] bg-slate-50/50 dark:bg-[#131c2e] text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsNotificationsOpen(false);
+                    onViewChange?.('notifications');
+                  }}
+                  className="w-full py-1.5 rounded-lg text-xs font-semibold text-[#2563EB] dark:text-[#60A5FA] hover:bg-[#EFF6FF] dark:hover:bg-[#172554] transition cursor-pointer"
+                >
+                  View All Notifications
+                </button>
               </div>
             </div>
           )}
